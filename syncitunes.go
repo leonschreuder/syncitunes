@@ -21,20 +21,64 @@ func createPlaylist(file string) string {
 	return id
 }
 
+var treeFound neoNode
+
+// var currentNode *neoNode
+
+type neoNode struct {
+	name  string
+	nodes []*neoNode
+}
+
+// func visit(path string, f os.FileInfo, err error) error {
+// 	if currentNode == nil {
+// 		treeFound = neoNode{name: f.Name()}
+// 		currentNode = &treeFound
+// 	} else {
+// 		newNode := &neoNode{name: f.Name()}
+// 		currentNode.nodes = append(currentNode.nodes, newNode)
+// 		currentNode = newNode
+// 	}
+// 	return nil
+// }
+
 type node struct {
 	name  string
 	nodes []node
+}
+
+func addToTree(f string) {
+	current, rest := popElement(f)
+	if treeFound.name != current {
+		treeFound = neoNode{name: current}
+	}
+	currentNode := &treeFound
+	for {
+		current, rest = popElement(rest)
+		var newNode *neoNode
+		for _, n := range currentNode.nodes {
+			if n.name == current {
+				newNode = n
+			}
+		}
+
+		if newNode == nil {
+			newNode = &neoNode{name: current}
+			currentNode.nodes = append(currentNode.nodes, newNode)
+		}
+
+		currentNode = newNode
+		if rest == "" {
+			break
+		}
+	}
 }
 
 func convertToTree(files ...string) node {
 	var finalTree node
 	for _, singleFile := range files {
 		currentTree := growTree(singleFile)
-		// if unsafe.Sizeof(finalTree) == 0 {
 		finalTree = currentTree
-		// } else {
-		// 	finalTree = joinTree(finalTree, currentTree)
-		// }
 	}
 	return finalTree
 }
@@ -54,6 +98,7 @@ func joinTree(tree1, tree2 node) node {
 }
 
 func popElement(s string) (string, string) {
+	// filepath.SplitList(s)
 	splitResult := strings.Split(s, "/")
 	if len(splitResult) >= 2 {
 		rest := strings.TrimPrefix(s, splitResult[0]+"/")

@@ -46,23 +46,3 @@ func findMusic(root string) {
 	err := filepath.Walk(root, visit)
 	fmt.Printf("filepath.Walk() returned %v\n", err)
 }
-
-// var treeFound neoNode
-// var currentNode *neoNode
-
-// type neoNode struct {
-// 	name  string
-// 	nodes []*neoNode
-// }
-
-// func visit(path string, f os.FileInfo, err error) error {
-// 	if currentNode == nil {
-// 		treeFound = neoNode{name: f.Name()}
-// 		currentNode = &treeFound
-// 	} else {
-// 		newNode := &neoNode{name: f.Name()}
-// 		currentNode.nodes = append(currentNode.nodes, newNode)
-// 		currentNode = newNode
-// 	}
-// 	return nil
-// }
