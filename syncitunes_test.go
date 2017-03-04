@@ -61,8 +61,27 @@ func Test__should_convert_single_file_into_tree(t *testing.T) {
 // 	assert.Equal(t, "second", tree.nodes[1].name)
 // }
 
-func Test__(t *testing.T) {
+func Test__should_join_on_first_level(t *testing.T) {
+	tree1 := node{"root", []node{node{"one", []node{node{name: "1"}}}}}
+	tree2 := node{"root", []node{node{name: "two"}}}
+
+	finalTree := joinTree(tree1, tree2)
+
+	assert.Equal(t, "root", finalTree.name)
+	assert.Equal(t, 2, len(finalTree.nodes))
+	assert.Equal(t, 1, len(finalTree.nodes[0].nodes))
 }
+
+// func Test__should_join_on_second_level(t *testing.T) {
+// 	tree1 := node{"root", []node{node{"one", []node{node{name: "1"}}}}}
+// 	tree2 := node{"root", []node{node{"one", []node{node{name: "2"}}}}}
+
+// 	finalTree := joinTree(tree1, tree2)
+
+// 	assert.Equal(t, "root", finalTree.name)
+// 	assert.Equal(t, 1, len(finalTree.nodes))
+// 	// assert.Equal(t, 2, len(finalTree.nodes[0].nodes))
+// }
 
 type mockInterface struct {
 	file          string

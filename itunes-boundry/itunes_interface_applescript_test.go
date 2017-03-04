@@ -3,6 +3,8 @@ package itunes
 import (
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var bitunes = &applescriptInterface{}
@@ -61,19 +63,16 @@ func Test__should_correctly_handle_retreiving_non_existent_parent(t *testing.T) 
 
 	result, err := bitunes.getParentIDForPlaylist("1")
 
-	if err == nil {
-		t.Errorf("Expected an error, got nil")
-	}
-	if result != "" {
-		t.Errorf("Expected an empty stdout, got %q", result)
-	}
+	assert.Error(t, err)
+	assert.Empty(t, result)
 }
 
 func Test__should_add_file_to_itunes(t *testing.T) {
-	id := bitunes.newPlaylist("test-playlist", "")
+	playlistID := bitunes.newPlaylist("test-playlist", "")
 
 	wd, _ := os.Getwd()
-	bitunes.addFileToPlaylist(wd+"/empty.mp3", id)
+	fileID, _ := bitunes.addFileToPlaylist(wd+"/../t/empty.mp3", playlistID)
 
-	bitunes.deletePlaylistByID(id)
+	assert.NotEqual(t, "", fileID)
+	bitunes.deletePlaylistByID(playlistID)
 }

@@ -36,9 +36,8 @@ func (a applescriptInterface) getParentIDForPlaylist(id string) (string, error) 
 	return a.runAppleScriptForItunes(`return id of parent in playlist id ` + id)
 }
 
-func (a applescriptInterface) addFileToPlaylist(filePath, playlistID string) error {
-	_, err := a.runAppleScriptForItunes(`add POSIX file "` + filePath + `" to user playlist id ` + playlistID)
-	return err
+func (a applescriptInterface) addFileToPlaylist(filePath, playlistID string) (string, error) {
+	return a.runAppleScriptForItunes(`return id of (add POSIX file "` + filePath + `" to user playlist id ` + playlistID + `)`)
 }
 
 func (a applescriptInterface) deletePlaylistByID(id string) error {

@@ -39,12 +39,6 @@ func convertToTree(files ...string) node {
 	return finalTree
 }
 
-func joinTree(tree1, tree2 node) node {
-	if tree1.name == tree2.name {
-	}
-	return node{}
-}
-
 func growTree(path string) node {
 	current, rest := popElement(path)
 	currentNode := node{name: current}
@@ -52,6 +46,11 @@ func growTree(path string) node {
 		currentNode.nodes = []node{growTree(rest)}
 	}
 	return currentNode
+}
+
+func joinTree(tree1, tree2 node) node {
+	tree1.nodes = append(tree1.nodes, tree2.nodes...)
+	return tree1
 }
 
 func popElement(s string) (string, string) {
