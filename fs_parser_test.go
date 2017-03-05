@@ -25,7 +25,9 @@ func Test__should_walk(t *testing.T) {
 	assert.Equal(t, "playlist", fileTree.name)
 	assert.Equal(t, 2, len(fileTree.nodes))
 	assert.Equal(t, "1.mp3", fileTree.nodes[0].name)
+	assert.Equal(t, firstFile, fileTree.nodes[0].path)
 	assert.Equal(t, "2.mp3", fileTree.nodes[1].name)
+	assert.Equal(t, secondFile, fileTree.nodes[1].path)
 }
 
 func Test__visit_should_ignore_dirs(t *testing.T) {
@@ -81,6 +83,14 @@ func Test__should_add_second_sub_node(t *testing.T) {
 	assert.Equal(t, "1.mp3", fileTree.nodes[0].name)
 	assert.Equal(t, "2.mp3", fileTree.nodes[1].name)
 }
+
+// func Test__scanning_example(t *testing.T) {
+// 	fileTree = &node{}
+
+// 	scanFolder("/Users/leonmoll/leon/@music/")
+
+// 	printTree(fileTree, 0)
+// }
 
 func Test__should_add_second_level_node(t *testing.T) {
 	fileTree = &node{}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,12 +29,24 @@ var fileTree *node
 
 type node struct {
 	name  string
+	path  string // Only leafs have a path
 	nodes []*node
 }
 
-func (n *node) NewRoot(rootName string) {
+func (n *node) newRoot(rootName string) {
 	if n.name == "" {
 		n.name = rootName
+	}
+}
+
+func printTree(n *node, depth int) {
+	var indent []byte
+	for i := 0; i < depth; i++ {
+		indent = append(indent, []byte(" ")...)
+	}
+	fmt.Println(string(indent) + n.name)
+	for _, subN := range n.nodes {
+		printTree(subN, depth+2)
 	}
 }
 
@@ -62,15 +75,17 @@ func visit(path string, f os.FileInfo, err error) error {
 	return nil
 }
 
-func addFileToTree(f string) {
-	nodeName, remainingNodes := shiftNode(strings.TrimPrefix(f, cwd))
-	fileTree.NewRoot(nodeName)
+func addFileToTree(path string) {
+	nodeName, remainingNodes := shiftNode(strings.TrimPrefix(path, cwd))
+	fileTree.newRoot(nodeName)
 	currentNode := fileTree
 	for {
 		nodeName, remainingNodes = shiftNode(remainingNodes)
 		currentNode = currentNode.getOrMakeChildWithName(nodeName)
 
 		if remainingNodes == "" {
+			//this is a leaf, add the absolute path to the node
+			currentNode.path = path
 			break
 		}
 	}
