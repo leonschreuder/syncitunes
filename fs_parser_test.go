@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -11,16 +10,33 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test__visit_should_ignore_nodes(t *testing.T) {
-	filesList = []string{}
+func Test__should_walk(t *testing.T) {
+	fileTree = node{}
+	wd, _ := os.Getwd()
+	os.MkdirAll(wd+"/t_mp/root/playlist/", 0777)
+	firstFile := wd + "/t_mp/root/playlist/1.mp3"
+	secondFile := wd + "/t_mp/root/playlist/2.mp3"
+	copy(wd+"/t/empty.mp3", firstFile)
+	copy(wd+"/t/empty.mp3", secondFile)
+	defer os.RemoveAll(wd + "/t_mp/")
+
+	scanFolder(wd + "/t_mp/root/")
+
+	assert.Equal(t, "playlist", fileTree.name)
+	assert.Equal(t, "1.mp3", fileTree.nodes[0].name)
+	assert.Equal(t, "2.mp3", fileTree.nodes[1].name)
+}
+
+func Test__visit_should_ignore_dirs(t *testing.T) {
+	fileTree = node{}
 
 	visit("/root/someDir", mockFileInfo{name: "someDir"}, nil)
 
-	assert.Empty(t, filesList)
+	assert.Empty(t, fileTree.name)
 }
 
 func Test__visit_should_add_valid_types_to_list(t *testing.T) {
-	filesList = []string{}
+	fileTree = node{}
 
 	filePath := "/root/someDir/someFile.mp3"
 	filePath2 := "/root/someOtherDir/someFile.aac"
@@ -29,55 +45,103 @@ func Test__visit_should_add_valid_types_to_list(t *testing.T) {
 	visit(filePath2, mockFileInfo{"someFile.aac", true}, nil)
 	visit(filePath3, mockFileInfo{"someFile.aac.bak", true}, nil)
 
-	assert.Equal(t, 2, len(filesList))
-	assert.Equal(t, filePath, filesList[0])
-	assert.Equal(t, filePath2, filesList[1])
+	assert.Equal(t, "root", fileTree.name)
+	assert.Equal(t, "someFile.mp3", fileTree.nodes[0].nodes[0].name)
+	assert.Equal(t, 1, len(fileTree.nodes[1].nodes))
+	assert.Equal(t, "someFile.aac", fileTree.nodes[1].nodes[0].name)
 }
 
-func Test__visit_should_not_pick_other_files(t *testing.T) {
-	filesList = []string{}
+func Test__should_add_single_node(t *testing.T) {
+	fileTree = node{}
 
-	visit("/root/someDir/someFile.txt", mockFileInfo{"someFile.txt", true}, nil)
+	addFileToTree("1.mp3")
 
-	assert.Empty(t, filesList)
+	assert.Equal(t, "1.mp3", fileTree.name)
 }
 
-// func Test__should_build_tree_from_single_file_in_several_folders(t *testing.T) {
-// 	wd, _ := os.Getwd()
-// 	os.MkdirAll(wd+"/t_mp/root/playlist/", 0777)
-// 	copy(wd+"/t/empty.mp3", wd+"/t_mp/root/playlist/1.mp3")
-// 	defer os.RemoveAll(wd + "/t_mp/")
+func Test__should_add_sub_node(t *testing.T) {
+	fileTree = node{}
 
-// 	findMusic(wd + "/t_mp/root/")
+	addFileToTree("root/1.mp3")
 
-// 	fmt.Println("tree:", treeFound)
-// 	assert.Equal(t, "root", treeFound.name)
-// 	assert.Equal(t, 1, len(treeFound.nodes))
-// 	assert.Equal(t, "playlist", treeFound.nodes[0].name)
-// 	assert.Equal(t, 1, len(treeFound.nodes[0].nodes))
-// 	assert.Equal(t, "1.mp3", treeFound.nodes[0].nodes[0].name)
-// }
+	assert.Equal(t, "root", fileTree.name)
+	assert.Equal(t, 1, len(fileTree.nodes))
+	assert.Equal(t, "1.mp3", fileTree.nodes[0].name)
+}
 
-// func Test__visit_should_add_multiple_nodes_on_same_level(t *testing.T) {
-// 	treeFound = neoNode{name: "root"}
-// 	currentNode = &treeFound
+func Test__should_add_second_sub_node(t *testing.T) {
+	fileTree = node{}
 
-// 	visit("root/subDir", mockFileInfo{"subDir"}, nil)
-// 	visit("root/otherDir", mockFileInfo{"otherDir"}, nil)
+	addFileToTree("root/1.mp3")
+	addFileToTree("root/2.mp3")
 
-// 	assert.Equal(t, 2, len(treeFound.nodes))
-// 	assert.Equal(t, treeFound.nodes[1], currentNode)
-// }
+	assert.Equal(t, "root", fileTree.name)
+	assert.Equal(t, 2, len(fileTree.nodes))
+	assert.Equal(t, "1.mp3", fileTree.nodes[0].name)
+	assert.Equal(t, "2.mp3", fileTree.nodes[1].name)
+}
 
-// func Test__visit_should_add_nodes_recursively(t *testing.T) {
-// 	treeFound = neoNode{name: "root"}
-// 	currentNode = &treeFound
+func Test__should_add_second_level_node(t *testing.T) {
+	fileTree = node{}
 
-// 	visit("root/subDir", mockFileInfo{"subDir"}, nil)
-// 	visit("root/subDir/subSubDir", mockFileInfo{"subSubDir"}, nil)
+	addFileToTree("root/subFolder/1.mp3")
 
-// 	assert.Equal(t, 1, len(treeFound.nodes))
-// }
+	assert.Equal(t, "root", fileTree.name)
+	assert.Len(t, fileTree.nodes, 1)
+	assert.Equal(t, "subFolder", fileTree.nodes[0].name)
+	assert.Len(t, fileTree.nodes[0].nodes, 1)
+}
+
+func Test__should_add_multiple_second_level_nodes(t *testing.T) {
+	fileTree = node{}
+
+	addFileToTree("root/subFolder/1.mp3")
+	addFileToTree("root/subFolder/2.mp3")
+
+	assert.Equal(t, "root", fileTree.name)
+	assert.Equal(t, 1, len(fileTree.nodes))
+	assert.Equal(t, "subFolder", fileTree.nodes[0].name)
+	assert.Equal(t, 2, len(fileTree.nodes[0].nodes))
+}
+
+func Test__should_add_multiple_multilevel_nodes(t *testing.T) {
+	fileTree = node{}
+
+	addFileToTree("root/subFolder/1.mp3")
+	addFileToTree("root/subFolder/2.mp3")
+	addFileToTree("root/subFolder2/3.mp3")
+
+	assert.Equal(t, "root", fileTree.name)
+	assert.Equal(t, 2, len(fileTree.nodes))
+	assert.Equal(t, "subFolder", fileTree.nodes[0].name)
+	assert.Equal(t, "subFolder2", fileTree.nodes[1].name)
+	assert.Equal(t, "1.mp3", fileTree.nodes[0].nodes[0].name)
+	assert.Equal(t, "2.mp3", fileTree.nodes[0].nodes[1].name)
+	assert.Equal(t, "3.mp3", fileTree.nodes[1].nodes[0].name)
+}
+
+func Test__should_add_realistic_folder_structure(t *testing.T) {
+	fileTree = node{}
+
+	addFileToTree("root/Aphrodite/Aphrodite - Urban Jungle/1.mp3")
+	addFileToTree("root/Aphrodite/Aphrodite - Urban Jungle/2.mp3")
+	addFileToTree("root/Arctic Monkeys/Arctic Monkeys - Artic Monkeys (Album)/1.mp3")
+	addFileToTree("root/Arctic Monkeys/Arctic Monkeys - Artic Monkeys (Album)/2.mp3")
+	addFileToTree("root/Arctic Monkeys/Arctic Monkeys - Artic Monkeys (Album)/3.mp3")
+	addFileToTree("root/Arctic Monkeys/Arctic Monkeys - Favourite Worst Nightmare/1.mp3")
+	addFileToTree("root/Arctic Monkeys/Arctic Monkeys - Favourite Worst Nightmare/2.mp3")
+
+	assert.Equal(t, "root", fileTree.name)
+	assert.Equal(t, 2, len(fileTree.nodes))
+	assert.Equal(t, "Aphrodite", fileTree.nodes[0].name)
+	assert.Equal(t, "Arctic Monkeys", fileTree.nodes[1].name)
+	assert.Equal(t, 1, len(fileTree.nodes[0].nodes))
+	assert.Equal(t, "Aphrodite - Urban Jungle", fileTree.nodes[0].nodes[0].name)
+	assert.Equal(t, 2, len(fileTree.nodes[0].nodes[0].nodes))
+	assert.Equal(t, 2, len(fileTree.nodes[1].nodes))
+	assert.Equal(t, "Arctic Monkeys - Artic Monkeys (Album)", fileTree.nodes[1].nodes[0].name)
+	assert.Equal(t, 3, len(fileTree.nodes[1].nodes[0].nodes))
+}
 
 type mockFileInfo struct {
 	name   string
@@ -101,22 +165,6 @@ func (m mockFileInfo) IsDir() bool {
 }
 func (m mockFileInfo) Sys() interface{} {
 	return nil
-}
-
-func Test__should_walk(t *testing.T) {
-	wd, _ := os.Getwd()
-	os.MkdirAll(wd+"/t_mp/root/playlist/", 0777)
-	firstFile := wd + "/t_mp/root/playlist/1.mp3"
-	secondFile := wd + "/t_mp/root/playlist/2.mp3"
-	copy(wd+"/t/empty.mp3", firstFile)
-	copy(wd+"/t/empty.mp3", secondFile)
-	defer os.RemoveAll(wd + "/t_mp/")
-
-	findMusic(wd + "/t_mp/root/")
-
-	fmt.Println("tree:", filesList)
-	assert.Equal(t, firstFile, filesList[0])
-	assert.Equal(t, secondFile, filesList[1])
 }
 
 func copy(src string, dst string) {
