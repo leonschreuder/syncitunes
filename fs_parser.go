@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -25,13 +24,35 @@ var supportedFileTypes = []string{
 	".caf", //apple lossless
 }
 
-var fileTree node
+var fileTree *node
+
+type node struct {
+	name  string
+	nodes []*node
+}
+
+func (n *node) NewRoot(rootName string) {
+	if n.name == "" {
+		n.name = rootName
+	}
+}
+
+func (n *node) getOrMakeChildWithName(nodeName string) *node {
+	for _, currentNode := range n.nodes {
+		if currentNode.name == nodeName {
+			return currentNode
+		}
+	}
+	newNode := &node{name: nodeName}
+	n.nodes = append(n.nodes, newNode)
+	return newNode
+}
+
 var cwd string
 
-func scanFolder(root string) {
+func scanFolder(root string) error {
 	cwd = root
-	err := filepath.Walk(root, visit)
-	fmt.Printf("filepath.Walk() returned %v\n", err)
+	return filepath.Walk(root, visit)
 }
 
 func visit(path string, f os.FileInfo, err error) error {
@@ -41,52 +62,27 @@ func visit(path string, f os.FileInfo, err error) error {
 	return nil
 }
 
-type node struct {
-	name  string
-	nodes []*node
-}
-
 func addFileToTree(f string) {
-	current, rest := popElement(strings.TrimPrefix(f, cwd))
-	if fileTree.name != current {
-		fileTree = node{name: current}
-	}
-	currentNode := &fileTree
+	nodeName, remainingNodes := shiftNode(strings.TrimPrefix(f, cwd))
+	fileTree.NewRoot(nodeName)
+	currentNode := fileTree
 	for {
-		current, rest = popElement(rest)
-		var newNode *node
-		for _, n := range currentNode.nodes {
-			if n.name == current {
-				newNode = n
-			}
-		}
+		nodeName, remainingNodes = shiftNode(remainingNodes)
+		currentNode = currentNode.getOrMakeChildWithName(nodeName)
 
-		if newNode == nil {
-			newNode = &node{name: current}
-			currentNode.nodes = append(currentNode.nodes, newNode)
-		}
-
-		currentNode = newNode
-		if rest == "" {
+		if remainingNodes == "" {
 			break
 		}
 	}
 }
 
-func popElement(s string) (string, string) {
-	splitResult := strings.Split(s, "/")
-	current := splitResult[0]
-	if len(splitResult) >= 2 {
-		var rest string
-		if current == "" {
-			current = splitResult[1]
-			rest = strings.TrimPrefix(s, "/"+current+"/")
-		} else {
-			rest = strings.TrimPrefix(s, current+"/")
+func shiftNode(filePath string) (string, string) {
+	for i, rune := range filePath {
+		if os.IsPathSeparator(uint8(rune)) && i > 0 {
+			return filePath[:i], filePath[i+1:]
 		}
-		return current, rest
 	}
-	return current, ""
+	return filePath, ""
 }
 
 func isSupportedType(fileName string) bool {

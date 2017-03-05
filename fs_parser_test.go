@@ -11,7 +11,7 @@ import (
 )
 
 func Test__should_walk(t *testing.T) {
-	fileTree = node{}
+	fileTree = &node{}
 	wd, _ := os.Getwd()
 	os.MkdirAll(wd+"/t_mp/root/playlist/", 0777)
 	firstFile := wd + "/t_mp/root/playlist/1.mp3"
@@ -23,12 +23,13 @@ func Test__should_walk(t *testing.T) {
 	scanFolder(wd + "/t_mp/root/")
 
 	assert.Equal(t, "playlist", fileTree.name)
+	assert.Equal(t, 2, len(fileTree.nodes))
 	assert.Equal(t, "1.mp3", fileTree.nodes[0].name)
 	assert.Equal(t, "2.mp3", fileTree.nodes[1].name)
 }
 
 func Test__visit_should_ignore_dirs(t *testing.T) {
-	fileTree = node{}
+	fileTree = &node{}
 
 	visit("/root/someDir", mockFileInfo{name: "someDir"}, nil)
 
@@ -36,11 +37,11 @@ func Test__visit_should_ignore_dirs(t *testing.T) {
 }
 
 func Test__visit_should_add_valid_types_to_list(t *testing.T) {
-	fileTree = node{}
+	fileTree = &node{}
 
-	filePath := "/root/someDir/someFile.mp3"
-	filePath2 := "/root/someOtherDir/someFile.aac"
-	filePath3 := "/root/someOtherDir/someFile.aac.bak"
+	filePath := "root/someDir/someFile.mp3"
+	filePath2 := "root/someOtherDir/someFile.aac"
+	filePath3 := "root/someOtherDir/someFile.aac.bak"
 	visit(filePath, mockFileInfo{"someFile.mp3", true}, nil)
 	visit(filePath2, mockFileInfo{"someFile.aac", true}, nil)
 	visit(filePath3, mockFileInfo{"someFile.aac.bak", true}, nil)
@@ -52,7 +53,7 @@ func Test__visit_should_add_valid_types_to_list(t *testing.T) {
 }
 
 func Test__should_add_single_node(t *testing.T) {
-	fileTree = node{}
+	fileTree = &node{}
 
 	addFileToTree("1.mp3")
 
@@ -60,7 +61,7 @@ func Test__should_add_single_node(t *testing.T) {
 }
 
 func Test__should_add_sub_node(t *testing.T) {
-	fileTree = node{}
+	fileTree = &node{}
 
 	addFileToTree("root/1.mp3")
 
@@ -70,7 +71,7 @@ func Test__should_add_sub_node(t *testing.T) {
 }
 
 func Test__should_add_second_sub_node(t *testing.T) {
-	fileTree = node{}
+	fileTree = &node{}
 
 	addFileToTree("root/1.mp3")
 	addFileToTree("root/2.mp3")
@@ -82,7 +83,7 @@ func Test__should_add_second_sub_node(t *testing.T) {
 }
 
 func Test__should_add_second_level_node(t *testing.T) {
-	fileTree = node{}
+	fileTree = &node{}
 
 	addFileToTree("root/subFolder/1.mp3")
 
@@ -93,7 +94,7 @@ func Test__should_add_second_level_node(t *testing.T) {
 }
 
 func Test__should_add_multiple_second_level_nodes(t *testing.T) {
-	fileTree = node{}
+	fileTree = &node{}
 
 	addFileToTree("root/subFolder/1.mp3")
 	addFileToTree("root/subFolder/2.mp3")
@@ -105,7 +106,7 @@ func Test__should_add_multiple_second_level_nodes(t *testing.T) {
 }
 
 func Test__should_add_multiple_multilevel_nodes(t *testing.T) {
-	fileTree = node{}
+	fileTree = &node{}
 
 	addFileToTree("root/subFolder/1.mp3")
 	addFileToTree("root/subFolder/2.mp3")
@@ -121,7 +122,7 @@ func Test__should_add_multiple_multilevel_nodes(t *testing.T) {
 }
 
 func Test__should_add_realistic_folder_structure(t *testing.T) {
-	fileTree = node{}
+	fileTree = &node{}
 
 	addFileToTree("root/Aphrodite/Aphrodite - Urban Jungle/1.mp3")
 	addFileToTree("root/Aphrodite/Aphrodite - Urban Jungle/2.mp3")
