@@ -162,22 +162,21 @@ type mockInterface struct {
 	pathCreated string
 }
 
-func (i *mockInterface) newFolder(name string, id int) int {
-	return addNode(name, d, id)
+func (i *mockInterface) NewFolder(name string, id int) (int, error) {
+	return addNode(name, d, id), nil
 }
-func (i *mockInterface) newPlaylist(name string, id int) int {
-	return addNode(name, p, id)
+func (i *mockInterface) NewPlaylist(name string, id int) (int, error) {
+	return addNode(name, p, id), nil
 }
-func (mockInterface) getPlaylistIDByName(name string) (int, error) {
+func (mockInterface) GetPlaylistIDByName(name string) (int, error) {
 	return -1, nil
 }
-func (mockInterface) getParentIDForPlaylist(id int) (int, error) {
+func (mockInterface) GetParentIDForPlaylist(id int) (int, error) {
 	return -1, nil
 }
-func (i *mockInterface) addFileToPlaylist(filePath string, playlistID int) error {
-	addNode(filePath, f, playlistID)
-	return nil
+func (i *mockInterface) AddFileToPlaylist(filePath string, playlistID int) (int, error) {
+	return addNode(filePath, f, playlistID), nil
 }
-func (mockInterface) deletePlaylistByID(id int) error {
+func (mockInterface) DeletePlaylistByID(id int) error {
 	return nil
 }

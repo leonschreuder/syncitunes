@@ -65,6 +65,7 @@ var cwd string
 
 func scanFolder(root string) error {
 	cwd = root
+	fileTree = &node{}
 	return filepath.Walk(root, visit)
 }
 
