@@ -13,11 +13,35 @@ var iTunes itunesInterface
 var root = ""
 
 func fileTreeToItunes(node *node) {
-	r := iTunes.newFolder(node.name, 0)
-	for _, n := range node.nodes {
-		r2 := iTunes.newPlaylist(n.name, r)
-		// r2 := iTunes.newFolder(n.name, r)
-		// iTunes.newPlaylist(n.nodes[0].name, r2)
-		iTunes.addFileToPlaylist(n.nodes[0].path, r2)
+	recurseFileTreeToItunes(node, 0)
+}
+
+func recurseFileTreeToItunes(currentNode *node, lastParentID int) {
+	parentID := iTunes.newFolder(currentNode.name, lastParentID)
+	for _, n := range currentNode.nodes {
+		leefs, nodes := splitInLeefsAndNodes(n.nodes)
+
+		if len(leefs) > 0 {
+			r2 := iTunes.newPlaylist(n.name, parentID)
+			for _, s := range leefs {
+				iTunes.addFileToPlaylist(s.path, r2)
+			}
+		}
+		if len(nodes) > 0 {
+			recurseFileTreeToItunes(n, parentID)
+		}
 	}
+}
+
+func splitInLeefsAndNodes(inputNodes []*node) ([]*node, []*node) {
+	var leefs []*node
+	var nodes []*node
+	for _, n := range inputNodes {
+		if n.path != "" {
+			leefs = append(leefs, n)
+		} else {
+			nodes = append(nodes, n)
+		}
+	}
+	return leefs, nodes
 }
