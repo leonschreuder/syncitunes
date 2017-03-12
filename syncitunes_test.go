@@ -11,28 +11,25 @@ var count = 0
 
 func setup() {
 	fileTree = &node{}
-	cwd = ""
 	mock := mockInterface{}
 	iTunes = &mock
 	resultNode = &mockNode{}
 	count = 0
 }
 
-func Test__tree_with_single_file_to_itunes(t *testing.T) {
+func Test__should_support_folder_playlist_and_song(t *testing.T) {
 	setup()
 
 	addFileToTree("root/some_album/song.mp3")
 
 	fileTreeToItunes(fileTree)
 
-	assertNodeNameAndType(t, "root", d, resultNode)
-	assertNodeChildCountEquals(t, 1, resultNode)
-	assertNodeNameAndType(t, "some_album", p, resultNode.mockNodes[0])
-	assertNodeChildCountEquals(t, 1, resultNode.mockNodes[0])
-	assertNodeNameAndType(t, "root/some_album/song.mp3", f, resultNode.mockNodes[0].mockNodes[0])
+	assertTreeMapHasNameAndType(t, []int{}, "root", d)
+	assertTreeMapHasNameAndType(t, []int{0}, "some_album", p)
+	assertTreeMapHasNameAndType(t, []int{0, 0}, "root/some_album/song.mp3", f)
 }
 
-func Test__tree_with_multiple_files_to_itunes(t *testing.T) {
+func Test__should_support_files_in_differnt_folders(t *testing.T) {
 	setup()
 
 	addFileToTree("root/some_album/song.mp3")
@@ -40,16 +37,13 @@ func Test__tree_with_multiple_files_to_itunes(t *testing.T) {
 
 	fileTreeToItunes(fileTree)
 
-	assertNodeNameAndType(t, "root", d, resultNode)
-	assertNodeChildCountEquals(t, 2, resultNode)
-	assertNodeNameAndType(t, "some_album", p, resultNode.mockNodes[0])
-	assertNodeNameAndType(t, "some_other_album", p, resultNode.mockNodes[1])
-	assertNodeChildCountEquals(t, 1, resultNode.mockNodes[0])
-	assertNodeNameAndType(t, "root/some_album/song.mp3", f, resultNode.mockNodes[0].mockNodes[0])
-	assertNodeNameAndType(t, "root/some_other_album/song.mp3", f, resultNode.mockNodes[1].mockNodes[0])
+	assertTreeMapHasNameAndType(t, []int{0}, "some_album", p)
+	assertTreeMapHasNameAndType(t, []int{1}, "some_other_album", p)
+	assertTreeMapHasNameAndType(t, []int{0, 0}, "root/some_album/song.mp3", f)
+	assertTreeMapHasNameAndType(t, []int{1, 0}, "root/some_other_album/song.mp3", f)
 }
 
-func Test__tree_with_multiple_audio_files(t *testing.T) {
+func Test__should_support_multiple_audio_files_in_same_playlist(t *testing.T) {
 	setup()
 
 	addFileToTree("root/some_album/song.mp3")
@@ -58,50 +52,27 @@ func Test__tree_with_multiple_audio_files(t *testing.T) {
 
 	fileTreeToItunes(fileTree)
 
-	assertNodeNameAndType(t, "root", d, resultNode)
-	assertNodeChildCountEquals(t, 1, resultNode)
-	assertNodeNameAndType(t, "some_album", p, resultNode.mockNodes[0])
-	assertNodeChildCountEquals(t, 3, resultNode.mockNodes[0])
-	assertNodeNameAndType(t, "root/some_album/song.mp3", f, resultNode.mockNodes[0].mockNodes[0])
-	assertNodeNameAndType(t, "root/some_album/song2.mp3", f, resultNode.mockNodes[0].mockNodes[1])
-	assertNodeNameAndType(t, "root/some_album/song3.mp3", f, resultNode.mockNodes[0].mockNodes[2])
+	assertTreeMapHasNameAndType(t, []int{0}, "some_album", p)
+	assertTreeMapHasNameAndType(t, []int{0, 0}, "root/some_album/song.mp3", f)
+	assertTreeMapHasNameAndType(t, []int{0, 1}, "root/some_album/song2.mp3", f)
+	assertTreeMapHasNameAndType(t, []int{0, 2}, "root/some_album/song3.mp3", f)
 }
 
-func Test__tree_with_single_deep_file_to_itunes(t *testing.T) {
+func Test__should_support_recursive_nesting_of_nodes(t *testing.T) {
 	setup()
 
 	addFileToTree("root/some_style/some_artist/some_album/song.mp3")
 
 	fileTreeToItunes(fileTree)
 
-	assertNodeNameAndType(t, "root", d, resultNode)
-	assertNodeChildCountEquals(t, 1, resultNode)
-	assertNodeNameAndType(t, "some_style", d, resultNode.mockNodes[0])
-	assertNodeChildCountEquals(t, 1, resultNode.mockNodes[0])
-	assertNodeNameAndType(t, "some_artist", d, resultNode.mockNodes[0].mockNodes[0])
-	assertNodeChildCountEquals(t, 1, resultNode.mockNodes[0].mockNodes[0])
-	assertNodeNameAndType(t, "some_album", p, resultNode.mockNodes[0].mockNodes[0].mockNodes[0])
-	assertNodeChildCountEquals(t, 1, resultNode.mockNodes[0].mockNodes[0].mockNodes[0])
-	assertNodeNameAndType(t, "root/some_style/some_artist/some_album/song.mp3", f, resultNode.mockNodes[0].mockNodes[0].mockNodes[0].mockNodes[0])
+	assertTreeMapHasNameAndType(t, []int{}, "root", d)
+	assertTreeMapHasNameAndType(t, []int{0}, "some_style", d)
+	assertTreeMapHasNameAndType(t, []int{0, 0}, "some_artist", d)
+	assertTreeMapHasNameAndType(t, []int{0, 0, 0}, "some_album", p)
+	assertTreeMapHasNameAndType(t, []int{0, 0, 0, 0}, "root/some_style/some_artist/some_album/song.mp3", f)
 }
 
-func Test__tree_with_multiple_files_at_different_depths(t *testing.T) {
-	setup()
-
-	addFileToTree("root/some_album/song.mp3")
-	addFileToTree("root/some_other_album/song.mp3")
-	addFileToTree("root/some_style/some_artist/some_album/song.mp3")
-
-	fileTreeToItunes(fileTree)
-
-	assertNodeNameAndType(t, "root", d, resultNode)
-	assertNodeChildCountEquals(t, 3, resultNode)
-	assertNodeNameAndType(t, "some_album", p, resultNode.mockNodes[0])
-	assertNodeNameAndType(t, "some_other_album", p, resultNode.mockNodes[1])
-	assertNodeNameAndType(t, "some_style", d, resultNode.mockNodes[2])
-}
-
-func Test__should_handle_songs_on_different_depths_correctly(t *testing.T) {
+func Test__should_support_mixed_folder_and_playlists(t *testing.T) {
 	setup()
 
 	addFileToTree("root/some_artist/some_album/song.mp3")
@@ -110,21 +81,27 @@ func Test__should_handle_songs_on_different_depths_correctly(t *testing.T) {
 
 	fileTreeToItunes(fileTree)
 
-	assertNodeNameAndType(t, "some_album", p, resultNode.mockNodes[0].mockNodes[0])
-	assertNodeNameAndType(t, "root/some_artist/some_album/song.mp3", f, resultNode.mockNodes[0].mockNodes[0].mockNodes[0])
-	assertNodeNameAndType(t, "root/some_artist/some_album/song1.mp3", f, resultNode.mockNodes[0].mockNodes[0].mockNodes[1])
-	assertNodeNameAndType(t, "some_album", d, resultNode.mockNodes[0].mockNodes[1])
-	assertNodeNameAndType(t, "cd1", p, resultNode.mockNodes[0].mockNodes[1].mockNodes[0])
-	assertNodeNameAndType(t, "root/some_artist/some_album/cd1/song.mp3", f, resultNode.mockNodes[0].mockNodes[1].mockNodes[0].mockNodes[0])
+	assertTreeMapHasNameAndType(t, []int{0, 0}, "some_album", p)
+	assertTreeMapHasNameAndType(t, []int{0, 0, 0}, "root/some_artist/some_album/song.mp3", f)
+	assertTreeMapHasNameAndType(t, []int{0, 0, 1}, "root/some_artist/some_album/song1.mp3", f)
+	assertTreeMapHasNameAndType(t, []int{0, 1}, "some_album", d)
+	assertTreeMapHasNameAndType(t, []int{0, 1, 0}, "cd1", p)
+	assertTreeMapHasNameAndType(t, []int{0, 1, 0, 0}, "root/some_artist/some_album/cd1/song.mp3", f)
 }
 
-func assertNodeNameAndType(t *testing.T, name string, typ itemType, n *mockNode) {
-	assert.Equal(t, name, n.name)
-	assert.EqualValues(t, typ, n.kind, "expected different itunes item type.")
-}
-
-func assertNodeChildCountEquals(t *testing.T, count int, n *mockNode) {
-	assert.Equal(t, count, len(n.mockNodes))
+// checks supplied indexMapping exists and contains an item with specified name and type
+func assertTreeMapHasNameAndType(t *testing.T, indexMapping []int, name string, typ itemType) {
+	target := resultNode
+	for _, i := range indexMapping {
+		if len(target.mockNodes) > i {
+			target = target.mockNodes[i]
+		} else {
+			t.Errorf("requested node[%d], but %q has only %d child nodes", i, target.name, len(target.mockNodes))
+			t.Fail()
+		}
+	}
+	assert.Equal(t, name, target.name)
+	assert.EqualValues(t, typ, target.kind, "expected different itunes item type.")
 }
 
 var resultNode *mockNode
@@ -146,8 +123,7 @@ func (m *mockNode) String() string {
 			children = append(children, child.String())
 		}
 	}
-	// return fmt.Sprintf("[n:%q id:%d ch:%d]", m.name, m.id, len(m.mockNodes))
-	return fmt.Sprintf("[n:%q id:%d ch:%d]", m.name, m.id, children)
+	return fmt.Sprintf("[n:%q id:%d ch:%s]", m.name, m.id, children)
 }
 
 const (
@@ -159,21 +135,16 @@ const (
 func addNode(name string, t itemType, parent int) int {
 	count++
 	newNode := &mockNode{name: name, id: count, kind: t}
-	// fmt.Printf("==add %q==\n", name)
-	// fmt.Printf("looking for Id:%d\n", parent)
 	parentNode := findParent(resultNode, parent)
 	if parentNode != nil && parentNode.name != "" {
-		// fmt.Printf("\n    found:%q(%d)\n", parentNode.name, parentNode.id)
 		parentNode.mockNodes = append(parentNode.mockNodes, newNode)
 	} else {
 		resultNode = newNode
 	}
-	// fmt.Println("complete node:", resultNode)
 	return count
 }
 
 func findParent(currentNode *mockNode, parentID int) *mockNode {
-	// fmt.Printf("   cn:%q", currentNode)
 	if currentNode.id == parentID {
 		return currentNode
 	}
@@ -207,7 +178,6 @@ func (i *mockInterface) addFileToPlaylist(filePath string, playlistID int) error
 	addNode(filePath, f, playlistID)
 	return nil
 }
-
 func (mockInterface) deletePlaylistByID(id int) error {
 	return nil
 }

@@ -10,7 +10,6 @@ type itunesInterface interface {
 }
 
 var iTunes itunesInterface
-var root = ""
 
 func fileTreeToItunes(node *node) {
 	recurseFileTreeToItunes(node, 0)
