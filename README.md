@@ -21,6 +21,7 @@ into this
 
 
 The current feature set includes:
+
     - mac exclucivity
     - excruciating slowness
     - ignoring of what you already have in iTunes
