@@ -89,6 +89,26 @@ func Test__should_support_mixed_folder_and_playlists(t *testing.T) {
 	assertTreeMapHasNameAndType(t, []int{0, 1, 0, 0}, "root/some_artist/some_album/cd1/song.mp3", f)
 }
 
+func Test__should_support_single_root(t *testing.T) {
+	setup()
+
+	addFileToTree("root/A/A1/A-1.mp3")
+	addFileToTree("root/A/A1/A-2.mp3")
+	addFileToTree("root/A/A2/A-1.mp3")
+	addFileToTree("root/B/B1/B-1.mp3")
+	addFileToTree("root/C/C1/C-1.mp3")
+
+	fileTreeToItunes(fileTree)
+
+	assertTreeMapHasNameAndType(t, []int{}, "root", d)
+	assertTreeMapHasNameAndType(t, []int{0}, "A", d)
+	assertTreeMapHasNameAndType(t, []int{1}, "B", d)
+	assertTreeMapHasNameAndType(t, []int{2}, "C", d)
+	// assertTreeMapHasNameAndType(t, []int{0, 0}, "some_artist", d)
+	// assertTreeMapHasNameAndType(t, []int{0, 0, 0}, "some_album", p)
+	// assertTreeMapHasNameAndType(t, []int{0, 0, 0, 0}, "root/some_style/some_artist/some_album/song.mp3", f)
+}
+
 // checks supplied indexMapping exists and contains an item with specified name and type
 func assertTreeMapHasNameAndType(t *testing.T, indexMapping []int, name string, typ itemType) {
 	target := resultNode

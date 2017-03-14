@@ -13,24 +13,25 @@ import (
 type ApplescriptInterface struct {
 }
 
-func (a ApplescriptInterface) NewFolder(name string, id int) (int, error) {
-	output, err := a.runAppleScriptForItunes(`make new folder playlist with properties {name:"` + name + `"}`)
+// return id of (make new folder playlist at playlist id 1 with properties {name:\"root\"})
+func (a ApplescriptInterface) NewFolder(name string, parentID int) (int, error) {
+	var output string
+	var err error
+	if parentID > 0 {
+		strID := strconv.Itoa(parentID)
+		output, err = a.runAppleScriptForItunes(`return id of (make new folder playlist at playlist id ` + strID + ` with properties {name:"` + name + `"})`)
+	} else {
+		output, err = a.runAppleScriptForItunes(`return id of (make new folder playlist with properties {name:"` + name + `"})`)
+	}
+	// output, err := a.runAppleScriptForItunes(`make new folder playlist with properties {name:"` + name + `"}`)
 	if err != nil {
 		return -1, err
 	}
-	words := strings.Split(string(output), " ") //returns: folder playlist id 71268 of source id 66 of application "iTunes"
-	intID, err := strconv.Atoi(words[3])
+	// words := strings.Split(string(output), " ") //returns: folder playlist id 71268 of source id 66 of application "iTunes"
+	// intID, err := strconv.Atoi(words[3])
+	intID, err := strconv.Atoi(output)
 	return intID, err
 }
-
-// type itunesInterface interface {
-// 	NewFolder(name string, id int) (int, err)
-// 	NewPlaylist(name string, parentID int) (int, err)
-// 	GetPlaylistIDByName(name string) (int, error)
-// 	GetParentIDForPlaylist(id int) (int, error)
-// 	AddFileToPlaylist(filePath string, playlistID int) (int, error)
-// 	DeletePlaylistByID(id int) error
-// }
 
 func (a ApplescriptInterface) NewPlaylist(name string, parentID int) (int, error) {
 	var output string

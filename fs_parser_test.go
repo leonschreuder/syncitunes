@@ -4,30 +4,55 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
+func Test__scanning_example(t *testing.T) {
+	fileTree = &node{}
+
+	scanFolder("/Users/leonmoll/leon/@music/")
+
+	printTree(fileTree, 0)
+}
+
 func Test__should_walk(t *testing.T) {
 	fileTree = &node{}
 	wd, _ := os.Getwd()
-	os.MkdirAll(wd+"/t_mp/root/playlist/", 0777)
-	firstFile := wd + "/t_mp/root/playlist/1.mp3"
-	secondFile := wd + "/t_mp/root/playlist/2.mp3"
-	copy(wd+"/t/empty.mp3", firstFile)
-	copy(wd+"/t/empty.mp3", secondFile)
-	defer os.RemoveAll(wd + "/t_mp/")
+	tRoot := wd + "/t_mp/"
+	files := []string{
+		"artist/album/1.mp3",
+		"artist/album/2.mp3",
+		"other_artist/other_album/1.mp3",
+		"artist3/album3/1.mp3",
+	}
+	createFiles(tRoot, files)
+	defer os.RemoveAll(tRoot)
 
-	scanFolder(wd + "/t_mp/root/")
+	scanFolder(tRoot)
 
-	assert.Equal(t, "playlist", fileTree.name)
-	assert.Equal(t, 2, len(fileTree.nodes))
-	assert.Equal(t, "1.mp3", fileTree.nodes[0].name)
-	assert.Equal(t, firstFile, fileTree.nodes[0].path)
-	assert.Equal(t, "2.mp3", fileTree.nodes[1].name)
-	assert.Equal(t, secondFile, fileTree.nodes[1].path)
+	assertTreeMapHasNode(t, []int{}, "t_mp")
+	assertTreeMapHasNode(t, []int{0}, "artist")
+	assertTreeMapHasNode(t, []int{0, 0}, "album")
+	assertTreeMapHasNode(t, []int{0, 0, 0}, "1.mp3")
+	assertTreeMapHasNode(t, []int{0, 0, 1}, "2.mp3")
+	assertTreeMapHasNode(t, []int{2}, "other_artist")
+	assertTreeMapHasNode(t, []int{2, 0}, "other_album")
+	assertTreeMapHasNode(t, []int{1}, "artist3")
+	assertTreeMapHasNode(t, []int{1, 0}, "album3")
+	assert.Equal(t, tRoot+files[0], fileTree.nodes[0].nodes[0].nodes[0].path)
+	assert.Equal(t, tRoot+files[1], fileTree.nodes[0].nodes[0].nodes[1].path)
+}
+
+func createFiles(root string, files []string) {
+	wd, _ := os.Getwd()
+	for _, f := range files {
+		os.MkdirAll(filepath.Dir(root+f), 0777)
+		copy(wd+"/t/empty.mp3", root+f)
+	}
 }
 
 func Test__visit_should_ignore_dirs(t *testing.T) {
@@ -41,25 +66,13 @@ func Test__visit_should_ignore_dirs(t *testing.T) {
 func Test__visit_should_add_valid_types_to_list(t *testing.T) {
 	fileTree = &node{}
 
-	filePath := "root/someDir/someFile.mp3"
-	filePath2 := "root/someOtherDir/someFile.aac"
-	filePath3 := "root/someOtherDir/someFile.aac.bak"
-	visit(filePath, mockFileInfo{"someFile.mp3", true}, nil)
-	visit(filePath2, mockFileInfo{"someFile.aac", true}, nil)
-	visit(filePath3, mockFileInfo{"someFile.aac.bak", true}, nil)
+	visit("root/someDir/someFile.mp3", mockFileInfo{"someFile.mp3", true}, nil)
+	visit("root/someOtherDir/someFile.aac", mockFileInfo{"someFile.aac", true}, nil)
+	visit("root/someOtherDir/someFile.aac.bak", mockFileInfo{"someFile.aac.bak", true}, nil)
 
-	assert.Equal(t, "root", fileTree.name)
-	assert.Equal(t, "someFile.mp3", fileTree.nodes[0].nodes[0].name)
+	assertTreeMapHasNode(t, []int{0, 0}, "someFile.mp3")
+	assertTreeMapHasNode(t, []int{1, 0}, "someFile.aac")
 	assert.Equal(t, 1, len(fileTree.nodes[1].nodes))
-	assert.Equal(t, "someFile.aac", fileTree.nodes[1].nodes[0].name)
-}
-
-func Test__should_add_single_node(t *testing.T) {
-	fileTree = &node{}
-
-	addFileToTree("1.mp3")
-
-	assert.Equal(t, "1.mp3", fileTree.name)
 }
 
 func Test__should_add_sub_node(t *testing.T) {
@@ -67,9 +80,8 @@ func Test__should_add_sub_node(t *testing.T) {
 
 	addFileToTree("root/1.mp3")
 
-	assert.Equal(t, "root", fileTree.name)
-	assert.Equal(t, 1, len(fileTree.nodes))
-	assert.Equal(t, "1.mp3", fileTree.nodes[0].name)
+	assertTreeMapHasNode(t, []int{}, "root")
+	assertTreeMapHasNode(t, []int{0}, "1.mp3")
 }
 
 func Test__should_add_second_sub_node(t *testing.T) {
@@ -78,29 +90,17 @@ func Test__should_add_second_sub_node(t *testing.T) {
 	addFileToTree("root/1.mp3")
 	addFileToTree("root/2.mp3")
 
-	assert.Equal(t, "root", fileTree.name)
-	assert.Equal(t, 2, len(fileTree.nodes))
-	assert.Equal(t, "1.mp3", fileTree.nodes[0].name)
-	assert.Equal(t, "2.mp3", fileTree.nodes[1].name)
+	assertTreeMapHasNode(t, []int{0}, "1.mp3")
+	assertTreeMapHasNode(t, []int{1}, "2.mp3")
 }
-
-// func Test__scanning_example(t *testing.T) {
-// 	fileTree = &node{}
-
-// 	scanFolder("/Users/leonmoll/leon/@music/")
-
-// 	printTree(fileTree, 0)
-// }
 
 func Test__should_add_second_level_node(t *testing.T) {
 	fileTree = &node{}
 
 	addFileToTree("root/subFolder/1.mp3")
 
-	assert.Equal(t, "root", fileTree.name)
-	assert.Len(t, fileTree.nodes, 1)
-	assert.Equal(t, "subFolder", fileTree.nodes[0].name)
-	assert.Len(t, fileTree.nodes[0].nodes, 1)
+	assertTreeMapHasNode(t, []int{0}, "subFolder")
+	assertTreeMapHasNode(t, []int{0, 0}, "1.mp3")
 }
 
 func Test__should_add_multiple_second_level_nodes(t *testing.T) {
@@ -109,10 +109,9 @@ func Test__should_add_multiple_second_level_nodes(t *testing.T) {
 	addFileToTree("root/subFolder/1.mp3")
 	addFileToTree("root/subFolder/2.mp3")
 
-	assert.Equal(t, "root", fileTree.name)
-	assert.Equal(t, 1, len(fileTree.nodes))
-	assert.Equal(t, "subFolder", fileTree.nodes[0].name)
-	assert.Equal(t, 2, len(fileTree.nodes[0].nodes))
+	assertTreeMapHasNode(t, []int{0}, "subFolder")
+	assertTreeMapHasNode(t, []int{0, 0}, "1.mp3")
+	assertTreeMapHasNode(t, []int{0, 1}, "2.mp3")
 }
 
 func Test__should_add_multiple_multilevel_nodes(t *testing.T) {
@@ -122,13 +121,11 @@ func Test__should_add_multiple_multilevel_nodes(t *testing.T) {
 	addFileToTree("root/subFolder/2.mp3")
 	addFileToTree("root/subFolder2/3.mp3")
 
-	assert.Equal(t, "root", fileTree.name)
-	assert.Equal(t, 2, len(fileTree.nodes))
-	assert.Equal(t, "subFolder", fileTree.nodes[0].name)
-	assert.Equal(t, "subFolder2", fileTree.nodes[1].name)
-	assert.Equal(t, "1.mp3", fileTree.nodes[0].nodes[0].name)
-	assert.Equal(t, "2.mp3", fileTree.nodes[0].nodes[1].name)
-	assert.Equal(t, "3.mp3", fileTree.nodes[1].nodes[0].name)
+	assertTreeMapHasNode(t, []int{0}, "subFolder")
+	assertTreeMapHasNode(t, []int{0, 0}, "1.mp3")
+	assertTreeMapHasNode(t, []int{0, 1}, "2.mp3")
+	assertTreeMapHasNode(t, []int{1}, "subFolder2")
+	assertTreeMapHasNode(t, []int{1, 0}, "3.mp3")
 }
 
 func Test__should_add_realistic_folder_structure(t *testing.T) {
@@ -142,16 +139,30 @@ func Test__should_add_realistic_folder_structure(t *testing.T) {
 	addFileToTree("root/Arctic Monkeys/Arctic Monkeys - Favourite Worst Nightmare/1.mp3")
 	addFileToTree("root/Arctic Monkeys/Arctic Monkeys - Favourite Worst Nightmare/2.mp3")
 
-	assert.Equal(t, "root", fileTree.name)
-	assert.Equal(t, 2, len(fileTree.nodes))
-	assert.Equal(t, "Aphrodite", fileTree.nodes[0].name)
-	assert.Equal(t, "Arctic Monkeys", fileTree.nodes[1].name)
-	assert.Equal(t, 1, len(fileTree.nodes[0].nodes))
-	assert.Equal(t, "Aphrodite - Urban Jungle", fileTree.nodes[0].nodes[0].name)
-	assert.Equal(t, 2, len(fileTree.nodes[0].nodes[0].nodes))
-	assert.Equal(t, 2, len(fileTree.nodes[1].nodes))
-	assert.Equal(t, "Arctic Monkeys - Artic Monkeys (Album)", fileTree.nodes[1].nodes[0].name)
-	assert.Equal(t, 3, len(fileTree.nodes[1].nodes[0].nodes))
+	assertTreeMapHasNode(t, []int{}, "root")
+	assertTreeMapHasNode(t, []int{0}, "Aphrodite")
+	assertTreeMapHasNode(t, []int{1}, "Arctic Monkeys")
+	assertTreeMapHasNode(t, []int{0, 0}, "Aphrodite - Urban Jungle")
+	assertTreeMapHasNode(t, []int{0, 0, 0}, "1.mp3")
+	assertTreeMapHasNode(t, []int{0, 0, 1}, "2.mp3")
+	assertTreeMapHasNode(t, []int{1, 0}, "Arctic Monkeys - Artic Monkeys (Album)")
+	assertTreeMapHasNode(t, []int{1, 0, 2}, "3.mp3")
+	assertTreeMapHasNode(t, []int{1, 1}, "Arctic Monkeys - Favourite Worst Nightmare")
+	assertTreeMapHasNode(t, []int{1, 1, 1}, "2.mp3")
+}
+
+// checks supplied indexMapping exists and contains an item with specified name and type
+func assertTreeMapHasNode(t *testing.T, indexMapping []int, nodeName string) {
+	target := fileTree
+	for _, i := range indexMapping {
+		if len(target.nodes) > i {
+			target = target.nodes[i]
+		} else {
+			t.Errorf("requested node[%d], but %q has only %d child nodes", i, target.name, len(target.nodes))
+			t.Fail()
+		}
+	}
+	assert.Equal(t, nodeName, target.name)
 }
 
 type mockFileInfo struct {

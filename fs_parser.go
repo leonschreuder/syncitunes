@@ -42,7 +42,7 @@ func (n *node) newRoot(rootName string) {
 func printTree(n *node, depth int) {
 	var indent []byte
 	for i := 0; i < depth; i++ {
-		indent = append(indent, []byte(" ")...)
+		indent = append(indent, []byte(".")...)
 	}
 	fmt.Println(string(indent) + n.name)
 	for _, subN := range n.nodes {
@@ -64,7 +64,8 @@ func (n *node) getOrMakeChildWithName(nodeName string) *node {
 var cwd string
 
 func scanFolder(root string) error {
-	cwd = root
+	dir, _ := filepath.Abs(root)
+	cwd = filepath.Dir(dir) + "/"
 	fileTree = &node{}
 	return filepath.Walk(root, visit)
 }
