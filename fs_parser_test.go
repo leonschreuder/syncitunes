@@ -11,14 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test__scanning_example(t *testing.T) {
-	fileTree = &node{}
-
-	scanFolder("/Users/leonmoll/leon/@music/")
-
-	printTree(fileTree, 0)
-}
-
 func Test__should_walk(t *testing.T) {
 	fileTree = &node{}
 	wd, _ := os.Getwd()

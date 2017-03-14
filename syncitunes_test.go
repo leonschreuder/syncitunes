@@ -104,9 +104,6 @@ func Test__should_support_single_root(t *testing.T) {
 	assertTreeMapHasNameAndType(t, []int{0}, "A", d)
 	assertTreeMapHasNameAndType(t, []int{1}, "B", d)
 	assertTreeMapHasNameAndType(t, []int{2}, "C", d)
-	// assertTreeMapHasNameAndType(t, []int{0, 0}, "some_artist", d)
-	// assertTreeMapHasNameAndType(t, []int{0, 0, 0}, "some_album", p)
-	// assertTreeMapHasNameAndType(t, []int{0, 0, 0, 0}, "root/some_style/some_artist/some_album/song.mp3", f)
 }
 
 // checks supplied indexMapping exists and contains an item with specified name and type
