@@ -46,7 +46,7 @@ func printTree(n *node, depth int) {
 	}
 	fmt.Println(string(indent) + n.name)
 	for _, subN := range n.nodes {
-		printTree(subN, depth+2)
+		printTree(subN, depth+1)
 	}
 }
 

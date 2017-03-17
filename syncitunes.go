@@ -21,11 +21,17 @@ func main() {
 	scanFolder("/Users/leonmoll/leon/@music/")
 	printTree(fileTree, 0)
 	iTunes = &itunes.ApplescriptInterface{}
-	fileTreeToItunes(fileTree)
+	fileTreeToItunes(fileTree, true)
 }
 
-func fileTreeToItunes(node *node) {
-	recurseFileTreeToItunes(node, 0)
+func fileTreeToItunes(node *node, includeRoot bool) {
+	if !includeRoot {
+		for _, subN := range node.nodes {
+			recurseFileTreeToItunes(subN, 0)
+		}
+	} else {
+		recurseFileTreeToItunes(node, 0)
+	}
 }
 
 func recurseFileTreeToItunes(currentNode *node, lastParentID int) {
