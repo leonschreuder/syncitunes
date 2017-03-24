@@ -1,17 +1,11 @@
 package main
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-)
+import "testing"
 
 func setup() {
 	fileTree = &node{}
-	mock := mockInterface{}
+	mock := newMockInterface()
 	iTunes = &mock
-	resultNode = &mockNode{}
-	count = 0
 }
 
 func Test__should_support_folder_playlist_and_song(t *testing.T) {
@@ -118,17 +112,16 @@ func Test__should_support_not_including_root(t *testing.T) {
 	assertTreeMapHasNameAndType(t, []int{2}, "C", d)
 }
 
-// checks supplied indexMapping exists and contains an item with specified name and type
-func assertTreeMapHasNameAndType(t *testing.T, indexMapping []int, name string, typ itemType) {
-	target := resultNode
-	for _, i := range indexMapping {
-		if len(target.mockNodes) > i {
-			target = target.mockNodes[i]
-		} else {
-			t.Errorf("requested node[%d], but %q has only %d child nodes", i, target.name, len(target.mockNodes))
-			t.Fail()
-		}
-	}
-	assert.Equal(t, name, target.name)
-	assert.EqualValues(t, typ, target.kind, "expected different itunes item type.")
-}
+// func Test__should_not_include_folder_if_already_added(t *testing.T) {
+// 	setup()
+
+// 	addFileToTree("root/art/alb/sng.mp3")
+
+// 	fileTreeToItunes(fileTree, true)
+// 	fileTreeToItunes(fileTree, true)
+
+// 	// printMockTree(resultNode, 0)
+
+// 	assertTreeMapHasNameAndType(t, []int{}, "root", d)
+// 	assertTreeMapHasNameAndType(t, []int{0}, "art", d)
+// }

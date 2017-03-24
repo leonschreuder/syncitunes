@@ -6,7 +6,37 @@ var resultNode *mockNode
 
 type itemType int
 
-var count = 0
+var currentIdCount = 0
+
+type mockInterface struct {
+	currentID   int
+	pathCreated string
+}
+
+func newMockInterface() mockInterface {
+	currentIdCount = 0
+	resultNode = &mockNode{}
+	return mockInterface{}
+}
+
+func (i *mockInterface) NewFolder(name string, id int) (int, error) {
+	return addNode(name, d, id), nil
+}
+func (i *mockInterface) NewPlaylist(name string, id int) (int, error) {
+	return addNode(name, p, id), nil
+}
+func (mockInterface) GetPlaylistIDByName(name string) (int, error) {
+	return -1, nil
+}
+func (mockInterface) GetParentIDForPlaylist(id int) (int, error) {
+	return -1, nil
+}
+func (i *mockInterface) AddFileToPlaylist(filePath string, playlistID int) (int, error) {
+	return addNode(filePath, f, playlistID), nil
+}
+func (mockInterface) DeletePlaylistByID(id int) error {
+	return nil
+}
 
 type mockNode struct {
 	name      string
@@ -44,21 +74,37 @@ const (
 )
 
 func addNode(name string, t itemType, parent int) int {
-	count++
-	newNode := &mockNode{name: name, id: count, kind: t}
+	currentIdCount++
+	newNode := &mockNode{name: name, id: currentIdCount, kind: t}
 	parentNode := findParent(resultNode, parent)
 	if parentNode == nil || parentNode.name == "" {
-		if resultNode.name == "" && len(resultNode.mockNodes) < 1 {
+		if rootNotSet() {
 			resultNode = newNode
-		} else if resultNode.name != "" {
-			resultNode = &mockNode{mockNodes: []*mockNode{resultNode, newNode}}
+		} else if rootSetWithNormalNode() {
+			addSecondRoot(newNode)
 		} else {
-			resultNode.mockNodes = append(resultNode.mockNodes, newNode)
+			addChildToNode(newNode, resultNode)
 		}
 	} else {
-		parentNode.mockNodes = append(parentNode.mockNodes, newNode)
+		addChildToNode(newNode, parentNode)
 	}
-	return count
+	return currentIdCount
+}
+
+func rootNotSet() bool {
+	return resultNode.name == "" && len(resultNode.mockNodes) < 1
+}
+
+func rootSetWithNormalNode() bool {
+	return resultNode.name != ""
+}
+
+func addChildToNode(child *mockNode, parent *mockNode) {
+	parent.mockNodes = append(parent.mockNodes, child)
+}
+
+func addSecondRoot(n *mockNode) {
+	resultNode = &mockNode{mockNodes: []*mockNode{resultNode, n}}
 }
 
 func findParent(currentNode *mockNode, parentID int) *mockNode {
@@ -71,29 +117,5 @@ func findParent(currentNode *mockNode, parentID int) *mockNode {
 			return result
 		}
 	}
-	return nil
-}
-
-type mockInterface struct {
-	currentID   int
-	pathCreated string
-}
-
-func (i *mockInterface) NewFolder(name string, id int) (int, error) {
-	return addNode(name, d, id), nil
-}
-func (i *mockInterface) NewPlaylist(name string, id int) (int, error) {
-	return addNode(name, p, id), nil
-}
-func (mockInterface) GetPlaylistIDByName(name string) (int, error) {
-	return -1, nil
-}
-func (mockInterface) GetParentIDForPlaylist(id int) (int, error) {
-	return -1, nil
-}
-func (i *mockInterface) AddFileToPlaylist(filePath string, playlistID int) (int, error) {
-	return addNode(filePath, f, playlistID), nil
-}
-func (mockInterface) DeletePlaylistByID(id int) error {
 	return nil
 }
