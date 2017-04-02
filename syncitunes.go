@@ -26,9 +26,7 @@ func main() {
 
 func fileTreeToItunes(node *node, includeRoot bool) {
 	if !includeRoot {
-		for _, subN := range node.nodes {
-			recurseFileTreeToItunes(subN, 0)
-		}
+		processNodes(node.nodes, 0)
 	} else {
 		recurseFileTreeToItunes(node, 0)
 	}
@@ -36,31 +34,49 @@ func fileTreeToItunes(node *node, includeRoot bool) {
 
 func recurseFileTreeToItunes(currentNode *node, lastParentID int) {
 	parentID, err := iTunes.NewFolder(currentNode.name, lastParentID)
-	if err != nil {
-		fmt.Println("ERROR: ", err.Error())
-	}
-	for _, n := range currentNode.nodes {
-		leefs, nodes := splitInLeefsAndNodes(n.nodes)
+	logErr(err)
 
-		if len(leefs) > 0 {
-			r2, err := iTunes.NewPlaylist(n.name, parentID)
-			if err != nil {
-				fmt.Println("ERROR: ", err.Error())
-			}
-			for _, s := range leefs {
-				_, err := iTunes.AddFileToPlaylist(s.path, r2)
-				if err != nil {
-					fmt.Println("ERROR: ", err.Error())
-				}
-			}
-		}
-		if len(nodes) > 0 {
-			recurseFileTreeToItunes(n, parentID)
-		}
+	processNodes(currentNode.nodes, parentID)
+}
+
+func processNodes(nodes []*node, parentID int) {
+	for _, currentChild := range nodes {
+		processNodeUnderParent(currentChild, parentID)
 	}
 }
 
-func splitInLeefsAndNodes(inputNodes []*node) ([]*node, []*node) {
+func processNodeUnderParent(currentChild *node, parentID int) {
+	leefs, nodes := separateLeefsAndNodes(currentChild.nodes)
+
+	if len(leefs) > 0 {
+		createPlaylist(currentChild, leefs, parentID)
+	}
+	if len(nodes) > 0 {
+		recurseFileTreeToItunes(currentChild, parentID)
+	}
+}
+
+func createPlaylist(currentChild *node, leefs []*node, parentID int) {
+	playlistID, err := iTunes.NewPlaylist(currentChild.name, parentID)
+	logErr(err)
+
+	for _, s := range leefs {
+		addLeefToPlaylist(s, playlistID)
+	}
+}
+
+func addLeefToPlaylist(s *node, playlistID int) {
+	_, err := iTunes.AddFileToPlaylist(s.path, playlistID)
+	logErr(err)
+}
+
+func logErr(err error) {
+	if err != nil {
+		fmt.Println("ERROR: ", err.Error())
+	}
+}
+
+func separateLeefsAndNodes(inputNodes []*node) ([]*node, []*node) {
 	var leefs []*node
 	var nodes []*node
 	for _, n := range inputNodes {

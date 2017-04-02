@@ -91,6 +91,19 @@ func addNode(name string, t itemType, parent int) int {
 	return currentIdCount
 }
 
+func findParent(currentNode *mockNode, parentID int) *mockNode {
+	if currentNode.id == parentID {
+		return currentNode
+	}
+	for _, n := range currentNode.mockNodes {
+		result := findParent(n, parentID)
+		if result != nil {
+			return result
+		}
+	}
+	return nil
+}
+
 func rootNotSet() bool {
 	return resultNode.name == "" && len(resultNode.mockNodes) < 1
 }
@@ -105,17 +118,4 @@ func addChildToNode(child *mockNode, parent *mockNode) {
 
 func addSecondRoot(n *mockNode) {
 	resultNode = &mockNode{mockNodes: []*mockNode{resultNode, n}}
-}
-
-func findParent(currentNode *mockNode, parentID int) *mockNode {
-	if currentNode.id == parentID {
-		return currentNode
-	}
-	for _, n := range currentNode.mockNodes {
-		result := findParent(n, parentID)
-		if result != nil {
-			return result
-		}
-	}
-	return nil
 }
