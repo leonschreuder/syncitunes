@@ -75,6 +75,20 @@ func (a ApplescriptInterface) DeletePlaylistByID(id int) error {
 	return err
 }
 
+func (a ApplescriptInterface) GetLibrary() (string, error) {
+	out, err := a.runAppleScriptForItunes(`
+	set resultList to {}
+	repeat with aVar in (get every playlist)
+		try
+			copy {name, id, id of parent} in aVar to end of resultList
+		on error
+			copy {name, id} in aVar to end of resultList
+		end try
+	end repeat
+	return resultList`)
+	return out, err
+}
+
 func (a ApplescriptInterface) runAppleScriptForItunes(commandLines ...string) (string, error) {
 	iTunesLines := []string{`tell application "iTunes"`}
 	iTunesLines = append(iTunesLines, commandLines...)

@@ -10,6 +10,7 @@ type itunesInterface interface {
 	NewFolder(name string, id int) (int, error)
 	NewPlaylist(name string, parentID int) (int, error)
 	GetPlaylistIDByName(name string) (int, error)
+	//GetPlaylistIDByNameInParent(name string) (int, error)
 	GetParentIDForPlaylist(id int) (int, error)
 	AddFileToPlaylist(filePath string, playlistID int) (int, error)
 	DeletePlaylistByID(id int) error
@@ -21,7 +22,7 @@ func main() {
 	scanFolder("/Users/leonmoll/leon/@music/")
 	printTree(fileTree, 0)
 	iTunes = &itunes.ApplescriptInterface{}
-	fileTreeToItunes(fileTree, true)
+	fileTreeToItunes(fileTree, false)
 }
 
 func fileTreeToItunes(node *node, includeRoot bool) {
@@ -32,11 +33,11 @@ func fileTreeToItunes(node *node, includeRoot bool) {
 	}
 }
 
-func recurseFileTreeToItunes(currentNode *node, lastParentID int) {
-	parentID, err := iTunes.NewFolder(currentNode.name, lastParentID)
+func recurseFileTreeToItunes(currentNode *node, parentID int) {
+	newFolderID, err := iTunes.NewFolder(currentNode.name, parentID)
 	logErr(err)
 
-	processNodes(currentNode.nodes, parentID)
+	processNodes(currentNode.nodes, newFolderID)
 }
 
 func processNodes(nodes []*node, parentID int) {
