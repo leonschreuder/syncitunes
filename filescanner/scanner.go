@@ -1,10 +1,11 @@
-package main
+package filescanner
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/meonlol/syncitunes/tree"
 )
 
 var supportedFileTypes = []string{
@@ -25,69 +26,39 @@ var supportedFileTypes = []string{
 	".caf", //apple lossless
 }
 
-var fileTree *node
-
-type node struct {
-	name  string
-	path  string // Only leafs have a path
-	nodes []*node
-}
-
-func (n *node) newRoot(rootName string) {
-	if n.name == "" {
-		n.name = rootName
-	}
-}
-
-func printTree(n *node, depth int) {
-	var indent []byte
-	for i := 0; i < depth; i++ {
-		indent = append(indent, []byte(".")...)
-	}
-	fmt.Println(string(indent) + n.name)
-	for _, subN := range n.nodes {
-		printTree(subN, depth+1)
-	}
-}
-
-func (n *node) getOrMakeChildWithName(nodeName string) *node {
-	for _, currentNode := range n.nodes {
-		if currentNode.name == nodeName {
-			return currentNode
-		}
-	}
-	newNode := &node{name: nodeName}
-	n.nodes = append(n.nodes, newNode)
-	return newNode
-}
+var FileTree *tree.Node
 
 var cwd string
 
-func scanFolder(root string) error {
+func ScanFolder(root string) (*tree.Node, error) {
 	dir, _ := filepath.Abs(root)
 	cwd = filepath.Dir(dir) + "/"
-	fileTree = &node{}
-	return filepath.Walk(root, visit)
+	FileTree = &tree.Node{}
+	err := filepath.Walk(root, visit)
+	if err != nil {
+		return nil, err
+	}
+	return FileTree, nil
 }
 
 func visit(path string, f os.FileInfo, err error) error {
 	if !f.IsDir() && isSupportedType(f.Name()) {
-		addFileToTree(path)
+		AddFileToTree(path)
 	}
 	return nil
 }
 
-func addFileToTree(path string) {
+func AddFileToTree(path string) {
 	nodeName, remainingNodes := shiftNode(strings.TrimPrefix(path, cwd))
-	fileTree.newRoot(nodeName)
-	currentNode := fileTree
+	FileTree.NewRoot(nodeName)
+	currentNode := FileTree
 	for {
 		nodeName, remainingNodes = shiftNode(remainingNodes)
-		currentNode = currentNode.getOrMakeChildWithName(nodeName)
+		currentNode = currentNode.GetOrMakeChildWithName(nodeName)
 
 		if remainingNodes == "" {
-			//this is a leaf, add the absolute path to the node
-			currentNode.path = path
+			//this is a leaf, add the absolute path to the Node
+			currentNode.Path = path
 			break
 		}
 	}

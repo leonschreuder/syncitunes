@@ -1,4 +1,4 @@
-package itunes
+package applescript_cli
 
 import (
 	"os"
@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var itunesIF = &ApplescriptInterface{}
+var itunesIF = &Adapter{}
 
 func Test__should_be_able_to_make_retreive_and_delete_playlists(t *testing.T) {
 	name := "go-osascript-itunes-test"
@@ -80,4 +80,3 @@ func Test__should_add_file_to_itunes(t *testing.T) {
 // 	assert.NoError(t, err)
 // 	assert.NotEmpty(t, result)
 // }
-

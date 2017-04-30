@@ -1,4 +1,4 @@
-package main
+package filescanner
 
 import (
 	"io/ioutil"
@@ -8,11 +8,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/meonlol/syncitunes/tree"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test__should_walk(t *testing.T) {
-	fileTree = &node{}
+	FileTree = &tree.Node{}
+	// fileTree = &tree.Node{}
 	wd, _ := os.Getwd()
 	tRoot := wd + "/t_mp/"
 	files := []string{
@@ -24,7 +26,7 @@ func Test__should_walk(t *testing.T) {
 	createFiles(tRoot, files)
 	defer os.RemoveAll(tRoot)
 
-	scanFolder(tRoot)
+	ScanFolder(tRoot)
 
 	assertTreeMapHasNode(t, []int{}, "t_mp")
 	assertTreeMapHasNode(t, []int{0}, "artist")
@@ -35,28 +37,29 @@ func Test__should_walk(t *testing.T) {
 	assertTreeMapHasNode(t, []int{2, 0}, "other_album")
 	assertTreeMapHasNode(t, []int{1}, "artist3")
 	assertTreeMapHasNode(t, []int{1, 0}, "album3")
-	assert.Equal(t, tRoot+files[0], fileTree.nodes[0].nodes[0].nodes[0].path)
-	assert.Equal(t, tRoot+files[1], fileTree.nodes[0].nodes[0].nodes[1].path)
+	assert.Equal(t, tRoot+files[0], FileTree.Nodes[0].Nodes[0].Nodes[0].Path)
+	assert.Equal(t, tRoot+files[1], FileTree.Nodes[0].Nodes[0].Nodes[1].Path)
 }
 
 func createFiles(root string, files []string) {
 	wd, _ := os.Getwd()
 	for _, f := range files {
 		os.MkdirAll(filepath.Dir(root+f), 0777)
-		copy(wd+"/t/empty.mp3", root+f)
+		copy(wd+"/../t/empty.mp3", root+f)
 	}
 }
 
 func Test__visit_should_ignore_dirs(t *testing.T) {
-	fileTree = &node{}
+	// fileTree = &tree.Node{}
+	FileTree = &tree.Node{}
 
 	visit("/root/someDir", mockFileInfo{name: "someDir"}, nil)
 
-	assert.Empty(t, fileTree.name)
+	assert.Empty(t, FileTree.Name)
 }
 
 func Test__visit_should_add_valid_types_to_list(t *testing.T) {
-	fileTree = &node{}
+	FileTree = &tree.Node{}
 
 	visit("root/someDir/someFile.mp3", mockFileInfo{"someFile.mp3", true}, nil)
 	visit("root/someOtherDir/someFile.aac", mockFileInfo{"someFile.aac", true}, nil)
@@ -64,42 +67,42 @@ func Test__visit_should_add_valid_types_to_list(t *testing.T) {
 
 	assertTreeMapHasNode(t, []int{0, 0}, "someFile.mp3")
 	assertTreeMapHasNode(t, []int{1, 0}, "someFile.aac")
-	assert.Equal(t, 1, len(fileTree.nodes[1].nodes))
+	assert.Equal(t, 1, len(FileTree.Nodes[1].Nodes))
 }
 
 func Test__should_add_sub_node(t *testing.T) {
-	fileTree = &node{}
+	FileTree = &tree.Node{}
 
-	addFileToTree("root/1.mp3")
+	AddFileToTree("root/1.mp3")
 
 	assertTreeMapHasNode(t, []int{}, "root")
 	assertTreeMapHasNode(t, []int{0}, "1.mp3")
 }
 
 func Test__should_add_second_sub_node(t *testing.T) {
-	fileTree = &node{}
+	FileTree = &tree.Node{}
 
-	addFileToTree("root/1.mp3")
-	addFileToTree("root/2.mp3")
+	AddFileToTree("root/1.mp3")
+	AddFileToTree("root/2.mp3")
 
 	assertTreeMapHasNode(t, []int{0}, "1.mp3")
 	assertTreeMapHasNode(t, []int{1}, "2.mp3")
 }
 
 func Test__should_add_second_level_node(t *testing.T) {
-	fileTree = &node{}
+	FileTree = &tree.Node{}
 
-	addFileToTree("root/subFolder/1.mp3")
+	AddFileToTree("root/subFolder/1.mp3")
 
 	assertTreeMapHasNode(t, []int{0}, "subFolder")
 	assertTreeMapHasNode(t, []int{0, 0}, "1.mp3")
 }
 
 func Test__should_add_multiple_second_level_nodes(t *testing.T) {
-	fileTree = &node{}
+	FileTree = &tree.Node{}
 
-	addFileToTree("root/subFolder/1.mp3")
-	addFileToTree("root/subFolder/2.mp3")
+	AddFileToTree("root/subFolder/1.mp3")
+	AddFileToTree("root/subFolder/2.mp3")
 
 	assertTreeMapHasNode(t, []int{0}, "subFolder")
 	assertTreeMapHasNode(t, []int{0, 0}, "1.mp3")
@@ -107,11 +110,11 @@ func Test__should_add_multiple_second_level_nodes(t *testing.T) {
 }
 
 func Test__should_add_multiple_multilevel_nodes(t *testing.T) {
-	fileTree = &node{}
+	FileTree = &tree.Node{}
 
-	addFileToTree("root/subFolder/1.mp3")
-	addFileToTree("root/subFolder/2.mp3")
-	addFileToTree("root/subFolder2/3.mp3")
+	AddFileToTree("root/subFolder/1.mp3")
+	AddFileToTree("root/subFolder/2.mp3")
+	AddFileToTree("root/subFolder2/3.mp3")
 
 	assertTreeMapHasNode(t, []int{0}, "subFolder")
 	assertTreeMapHasNode(t, []int{0, 0}, "1.mp3")
@@ -121,15 +124,15 @@ func Test__should_add_multiple_multilevel_nodes(t *testing.T) {
 }
 
 func Test__should_add_realistic_folder_structure(t *testing.T) {
-	fileTree = &node{}
+	FileTree = &tree.Node{}
 
-	addFileToTree("root/Aphrodite/Aphrodite - Urban Jungle/1.mp3")
-	addFileToTree("root/Aphrodite/Aphrodite - Urban Jungle/2.mp3")
-	addFileToTree("root/Arctic Monkeys/Arctic Monkeys - Artic Monkeys (Album)/1.mp3")
-	addFileToTree("root/Arctic Monkeys/Arctic Monkeys - Artic Monkeys (Album)/2.mp3")
-	addFileToTree("root/Arctic Monkeys/Arctic Monkeys - Artic Monkeys (Album)/3.mp3")
-	addFileToTree("root/Arctic Monkeys/Arctic Monkeys - Favourite Worst Nightmare/1.mp3")
-	addFileToTree("root/Arctic Monkeys/Arctic Monkeys - Favourite Worst Nightmare/2.mp3")
+	AddFileToTree("root/Aphrodite/Aphrodite - Urban Jungle/1.mp3")
+	AddFileToTree("root/Aphrodite/Aphrodite - Urban Jungle/2.mp3")
+	AddFileToTree("root/Arctic Monkeys/Arctic Monkeys - Artic Monkeys (Album)/1.mp3")
+	AddFileToTree("root/Arctic Monkeys/Arctic Monkeys - Artic Monkeys (Album)/2.mp3")
+	AddFileToTree("root/Arctic Monkeys/Arctic Monkeys - Artic Monkeys (Album)/3.mp3")
+	AddFileToTree("root/Arctic Monkeys/Arctic Monkeys - Favourite Worst Nightmare/1.mp3")
+	AddFileToTree("root/Arctic Monkeys/Arctic Monkeys - Favourite Worst Nightmare/2.mp3")
 
 	assertTreeMapHasNode(t, []int{}, "root")
 	assertTreeMapHasNode(t, []int{0}, "Aphrodite")
@@ -145,16 +148,16 @@ func Test__should_add_realistic_folder_structure(t *testing.T) {
 
 // checks supplied indexMapping exists and contains an item with specified name and type
 func assertTreeMapHasNode(t *testing.T, indexMapping []int, nodeName string) {
-	target := fileTree
+	target := FileTree
 	for _, i := range indexMapping {
-		if len(target.nodes) > i {
-			target = target.nodes[i]
+		if len(target.Nodes) > i {
+			target = target.Nodes[i]
 		} else {
-			t.Errorf("requested node[%d], but %q has only %d child nodes", i, target.name, len(target.nodes))
+			t.Errorf("requested Node[%d], but %q has only %d child nodes", i, target.Name, len(target.Nodes))
 			t.Fail()
 		}
 	}
-	assert.Equal(t, nodeName, target.name)
+	assert.Equal(t, nodeName, target.Name)
 }
 
 type mockFileInfo struct {

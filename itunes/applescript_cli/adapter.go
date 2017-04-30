@@ -1,4 +1,4 @@
-package itunes
+package applescript_cli
 
 import (
 	"errors"
@@ -10,11 +10,11 @@ import (
 // TODO: Add interface direct to itunes library? https://github.com/josephw/titl
 // https://metacpan.org/pod/distribution/Mac-iTunes/doc/file_format.pod
 
-type ApplescriptInterface struct {
+type Adapter struct {
 }
 
 // return id of (make new folder playlist at playlist id 1 with properties {name:\"root\"})
-func (a ApplescriptInterface) NewFolder(name string, parentID int) (int, error) {
+func (a Adapter) NewFolder(name string, parentID int) (int, error) {
 	var output string
 	var err error
 	if parentID > 0 {
@@ -33,7 +33,7 @@ func (a ApplescriptInterface) NewFolder(name string, parentID int) (int, error) 
 	return intID, err
 }
 
-func (a ApplescriptInterface) NewPlaylist(name string, parentID int) (int, error) {
+func (a Adapter) NewPlaylist(name string, parentID int) (int, error) {
 	var output string
 	var err error
 	if parentID > 0 {
@@ -49,33 +49,36 @@ func (a ApplescriptInterface) NewPlaylist(name string, parentID int) (int, error
 	return intID, err
 }
 
-func (a ApplescriptInterface) GetPlaylistIDByName(name string) (int, error) {
+func (a Adapter) GetPlaylistIDByName(name string) (int, error) {
 	out, err := a.runAppleScriptForItunes(`return id in playlist "` + name + `"`)
 	intID, _ := strconv.Atoi(out)
 	return intID, err
 }
 
-func (a ApplescriptInterface) GetParentIDForPlaylist(id int) (int, error) {
+func (a Adapter) GetParentIDForPlaylist(id int) (int, error) {
 	strID := strconv.Itoa(id)
 	out, err := a.runAppleScriptForItunes(`return id of parent in playlist id ` + strID)
 	intID, _ := strconv.Atoi(out)
 	return intID, err
 }
 
-func (a ApplescriptInterface) AddFileToPlaylist(filePath string, playlistID int) (int, error) {
+func (a Adapter) AddFileToPlaylist(filePath string, playlistID int) (int, error) {
 	strID := strconv.Itoa(playlistID)
 	out, err := a.runAppleScriptForItunes(`return id of (add POSIX file "` + filePath + `" to user playlist id ` + strID + `)`)
 	intID, _ := strconv.Atoi(out)
 	return intID, err
 }
 
-func (a ApplescriptInterface) DeletePlaylistByID(id int) error {
+func (a Adapter) DeletePlaylistByID(id int) error {
 	strID := strconv.Itoa(id)
 	_, err := a.runAppleScriptForItunes(`delete playlist id ` + strID)
 	return err
 }
 
-func (a ApplescriptInterface) GetLibrary() (string, error) {
+// func (a Adapter) UpdateTreeWithExisting(tree *tree.Node) {
+// }
+
+func (a Adapter) GetLibrary() (string, error) {
 	out, err := a.runAppleScriptForItunes(`
 	set resultList to {}
 	repeat with aVar in (get every playlist)
@@ -89,7 +92,7 @@ func (a ApplescriptInterface) GetLibrary() (string, error) {
 	return out, err
 }
 
-func (a ApplescriptInterface) runAppleScriptForItunes(commandLines ...string) (string, error) {
+func (a Adapter) runAppleScriptForItunes(commandLines ...string) (string, error) {
 	iTunesLines := []string{`tell application "iTunes"`}
 	iTunesLines = append(iTunesLines, commandLines...)
 	iTunesLines = append(iTunesLines, `end tell`)
@@ -102,7 +105,7 @@ func (a ApplescriptInterface) runAppleScriptForItunes(commandLines ...string) (s
 	return stdOut, err
 }
 
-func (a ApplescriptInterface) runAppleScript(commandLines ...string) ([]byte, error) {
+func (a Adapter) runAppleScript(commandLines ...string) ([]byte, error) {
 	params := []string{"-s", "s"}
 	for _, v := range commandLines {
 		params = append(params, "-e", v)

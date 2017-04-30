@@ -3,51 +3,47 @@ package main
 import (
 	"fmt"
 
+	"github.com/meonlol/syncitunes/filescanner"
 	"github.com/meonlol/syncitunes/itunes"
+	"github.com/meonlol/syncitunes/itunes/applescript_cli"
+	"github.com/meonlol/syncitunes/tree"
 )
 
-type itunesInterface interface {
-	NewFolder(name string, id int) (int, error)
-	NewPlaylist(name string, parentID int) (int, error)
-	GetPlaylistIDByName(name string) (int, error)
-	//GetPlaylistIDByNameInParent(name string) (int, error)
-	GetParentIDForPlaylist(id int) (int, error)
-	AddFileToPlaylist(filePath string, playlistID int) (int, error)
-	DeletePlaylistByID(id int) error
-}
+var iTunes itunes.Interface
 
-var iTunes itunesInterface
+var fileTree *tree.Node
 
 func main() {
-	scanFolder("/Users/leonmoll/leon/@music/")
-	printTree(fileTree, 0)
-	iTunes = &itunes.ApplescriptInterface{}
+	fileTree, _ = filescanner.ScanFolder("/Users/leonmoll/leon/@music/")
+	tree.Print(fileTree, 0)
+	iTunes = &applescript_cli.Adapter{}
+	// iTunes.UpdateTreeWithExisting(fileTree)
 	fileTreeToItunes(fileTree, false)
 }
 
-func fileTreeToItunes(node *node, includeRoot bool) {
+func fileTreeToItunes(node *tree.Node, includeRoot bool) {
 	if !includeRoot {
-		processNodes(node.nodes, 0)
+		processNodes(node.Nodes, 0)
 	} else {
 		recurseFileTreeToItunes(node, 0)
 	}
 }
 
-func recurseFileTreeToItunes(currentNode *node, parentID int) {
-	newFolderID, err := iTunes.NewFolder(currentNode.name, parentID)
+func recurseFileTreeToItunes(currentNode *tree.Node, parentID int) {
+	newFolderID, err := iTunes.NewFolder(currentNode.Name, parentID)
 	logErr(err)
 
-	processNodes(currentNode.nodes, newFolderID)
+	processNodes(currentNode.Nodes, newFolderID)
 }
 
-func processNodes(nodes []*node, parentID int) {
+func processNodes(nodes []*tree.Node, parentID int) {
 	for _, currentChild := range nodes {
 		processNodeUnderParent(currentChild, parentID)
 	}
 }
 
-func processNodeUnderParent(currentChild *node, parentID int) {
-	leefs, nodes := separateLeefsAndNodes(currentChild.nodes)
+func processNodeUnderParent(currentChild *tree.Node, parentID int) {
+	leefs, nodes := separateLeefsAndNodes(currentChild.Nodes)
 
 	if len(leefs) > 0 {
 		createPlaylist(currentChild, leefs, parentID)
@@ -57,8 +53,8 @@ func processNodeUnderParent(currentChild *node, parentID int) {
 	}
 }
 
-func createPlaylist(currentChild *node, leefs []*node, parentID int) {
-	playlistID, err := iTunes.NewPlaylist(currentChild.name, parentID)
+func createPlaylist(currentChild *tree.Node, leefs []*tree.Node, parentID int) {
+	playlistID, err := iTunes.NewPlaylist(currentChild.Name, parentID)
 	logErr(err)
 
 	for _, s := range leefs {
@@ -66,8 +62,8 @@ func createPlaylist(currentChild *node, leefs []*node, parentID int) {
 	}
 }
 
-func addLeefToPlaylist(s *node, playlistID int) {
-	_, err := iTunes.AddFileToPlaylist(s.path, playlistID)
+func addLeefToPlaylist(s *tree.Node, playlistID int) {
+	_, err := iTunes.AddFileToPlaylist(s.Path, playlistID)
 	logErr(err)
 }
 
@@ -77,11 +73,11 @@ func logErr(err error) {
 	}
 }
 
-func separateLeefsAndNodes(inputNodes []*node) ([]*node, []*node) {
-	var leefs []*node
-	var nodes []*node
+func separateLeefsAndNodes(inputNodes []*tree.Node) ([]*tree.Node, []*tree.Node) {
+	var leefs []*tree.Node
+	var nodes []*tree.Node
 	for _, n := range inputNodes {
-		if n.path != "" {
+		if n.Path != "" {
 			leefs = append(leefs, n)
 		} else {
 			nodes = append(nodes, n)
