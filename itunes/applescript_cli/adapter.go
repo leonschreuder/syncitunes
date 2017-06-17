@@ -5,6 +5,8 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+
+	"github.com/meonlol/syncitunes/tree"
 )
 
 // TODO: Add interface direct to itunes library? https://github.com/josephw/titl
@@ -75,8 +77,8 @@ func (a Adapter) DeletePlaylistByID(id int) error {
 	return err
 }
 
-// func (a Adapter) UpdateTreeWithExisting(tree *tree.Node) {
-// }
+func (a Adapter) UpdateTreeWithExisting(tree *tree.Node) {
+}
 
 func (a Adapter) GetLibrary() (string, error) {
 	out, err := a.runAppleScriptForItunes(`

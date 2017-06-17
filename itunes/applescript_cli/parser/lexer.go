@@ -1,4 +1,4 @@
-package applescript_cli
+package parser
 
 import "unicode"
 

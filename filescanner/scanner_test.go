@@ -50,7 +50,6 @@ func createFiles(root string, files []string) {
 }
 
 func Test__visit_should_ignore_dirs(t *testing.T) {
-	// fileTree = &tree.Node{}
 	FileTree = &tree.Node{}
 
 	visit("/root/someDir", mockFileInfo{name: "someDir"}, nil)

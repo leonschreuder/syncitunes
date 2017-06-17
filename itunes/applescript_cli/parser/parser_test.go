@@ -1,8 +1,10 @@
-package applescript_cli
+package parser
 
 import (
 	"testing"
 
+	"github.com/meonlol/syncitunes/filescanner"
+	"github.com/meonlol/syncitunes/tree"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,7 +22,7 @@ func Test__should_parse_root_object(t *testing.T) {
 
 	assert.NotNil(t, result)
 	assert.Equal(t, "bla", result[0].name)
-	assert.Equal(t, "14", result[0].ID)
+	assert.Equal(t, 14, result[0].ID)
 }
 
 func Test__should_parse_non_root_object(t *testing.T) {
@@ -30,8 +32,8 @@ func Test__should_parse_non_root_object(t *testing.T) {
 
 	assert.NotNil(t, result)
 	assert.Equal(t, "bla", result[0].name)
-	assert.Equal(t, "15", result[0].ID)
-	assert.Equal(t, "13", result[0].parentID)
+	assert.Equal(t, 15, result[0].ID)
+	assert.Equal(t, 13, result[0].parentID)
 }
 
 func Test__should_parse_multiple_objects(t *testing.T) {
@@ -41,11 +43,44 @@ func Test__should_parse_multiple_objects(t *testing.T) {
 
 	assert.NotNil(t, result)
 	assert.Equal(t, "bla", result[0].name)
-	assert.Equal(t, "14", result[0].ID)
+	assert.Equal(t, 14, result[0].ID)
 	assert.Equal(t, "blb", result[1].name)
-	assert.Equal(t, "15", result[1].ID)
-	assert.Equal(t, "14", result[1].parentID)
+	assert.Equal(t, 15, result[1].ID)
+	assert.Equal(t, 14, result[1].parentID)
 	assert.Equal(t, "blc", result[2].name)
-	assert.Equal(t, "16", result[2].ID)
-	assert.Equal(t, "14", result[2].parentID)
+	assert.Equal(t, 16, result[2].ID)
+	assert.Equal(t, 14, result[2].parentID)
+}
+
+func Test__should_update_simplest_tree(t *testing.T) {
+	filescanner.FileTree = &tree.Node{}
+	filescanner.AddFileToTree("root/some_album/song.mp3")
+
+	input := "{{\"root\", 1}{\"some_album\", 2, 1}}"
+
+	parseUpdatingTree(input, filescanner.FileTree)
+
+	nt := filescanner.FileTree
+	assert.Equal(t, 1, nt.ID)
+	assert.Equal(t, 2, nt.Nodes[0].ID)
+}
+
+func Test__should_update_tree_with_multiple_subfolders(t *testing.T) {
+
+	filescanner.FileTree = &tree.Node{}
+	filescanner.AddFileToTree("root/subFolder/1.mp3")
+	filescanner.AddFileToTree("root/subFolder2/2.mp3")
+
+	input := "{{\"root\", 1}{\"subFolder\", 2, 1}{\"subFolder2\", 3, 1}}"
+
+	parseUpdatingTree(input, filescanner.FileTree)
+
+	nt := filescanner.FileTree
+	assert.Equal(t, 1, nt.ID)
+	assert.Equal(t, 2, nt.Nodes[0].ID)
+	assert.Equal(t, 3, nt.Nodes[1].ID)
+}
+
+func Test__should_update_tree_for_complex_folder_sturcture(t *testing.T) {
+
 }

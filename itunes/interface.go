@@ -1,5 +1,7 @@
 package itunes
 
+import "github.com/meonlol/syncitunes/tree"
+
 type Interface interface {
 	NewFolder(name string, id int) (int, error)
 	NewPlaylist(name string, parentID int) (int, error)
@@ -8,7 +10,7 @@ type Interface interface {
 	GetParentIDForPlaylist(id int) (int, error)
 	AddFileToPlaylist(filePath string, playlistID int) (int, error)
 	DeletePlaylistByID(id int) error
-	// UpdateTreeWithExisting(tree *tree.Node)
+	UpdateTreeWithExisting(tree *tree.Node)
 }
 
 type ItemType int

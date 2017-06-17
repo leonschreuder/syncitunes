@@ -19,9 +19,9 @@ func Test__should_support_folder_playlist_and_song(t *testing.T) {
 	setup()
 
 	filescanner.AddFileToTree("root/some_album/song.mp3")
-	fileTree = filescanner.FileTree
+	nodeTree = filescanner.FileTree
 
-	fileTreeToItunes(fileTree, true)
+	fileTreeToItunes(nodeTree, true)
 
 	mock.AssertTreeMapHasNameAndType(t, mock.MockTree, []int{}, "root", itunes.Dir)
 	mock.AssertTreeMapHasNameAndType(t, mock.MockTree, []int{0}, "some_album", itunes.Playlist)
@@ -33,9 +33,9 @@ func Test__should_support_files_in_differnt_folders(t *testing.T) {
 
 	filescanner.AddFileToTree("root/some_album/song.mp3")
 	filescanner.AddFileToTree("root/some_other_album/song.mp3")
-	fileTree = filescanner.FileTree
+	nodeTree = filescanner.FileTree
 
-	fileTreeToItunes(fileTree, true)
+	fileTreeToItunes(nodeTree, true)
 
 	mock.AssertTreeMapHasNameAndType(t, mock.MockTree, []int{0}, "some_album", itunes.Playlist)
 	mock.AssertTreeMapHasNameAndType(t, mock.MockTree, []int{1}, "some_other_album", itunes.Playlist)
@@ -49,9 +49,9 @@ func Test__should_support_multiple_audio_files_in_same_playlist(t *testing.T) {
 	filescanner.AddFileToTree("root/some_album/song.mp3")
 	filescanner.AddFileToTree("root/some_album/song2.mp3")
 	filescanner.AddFileToTree("root/some_album/song3.mp3")
-	fileTree = filescanner.FileTree
+	nodeTree = filescanner.FileTree
 
-	fileTreeToItunes(fileTree, true)
+	fileTreeToItunes(nodeTree, true)
 
 	mock.AssertTreeMapHasNameAndType(t, mock.MockTree, []int{0}, "some_album", itunes.Playlist)
 	mock.AssertTreeMapHasNameAndType(t, mock.MockTree, []int{0, 0}, "root/some_album/song.mp3", itunes.File)
@@ -63,9 +63,9 @@ func Test__should_support_recursive_nesting_of_nodes(t *testing.T) {
 	setup()
 
 	filescanner.AddFileToTree("root/some_style/some_artist/some_album/song.mp3")
-	fileTree = filescanner.FileTree
+	nodeTree = filescanner.FileTree
 
-	fileTreeToItunes(fileTree, true)
+	fileTreeToItunes(nodeTree, true)
 
 	mock.AssertTreeMapHasNameAndType(t, mock.MockTree, []int{}, "root", itunes.Dir)
 	mock.AssertTreeMapHasNameAndType(t, mock.MockTree, []int{0}, "some_style", itunes.Dir)
@@ -80,9 +80,9 @@ func Test__should_support_mixed_folder_and_playlists(t *testing.T) {
 	filescanner.AddFileToTree("root/some_artist/some_album/song.mp3")
 	filescanner.AddFileToTree("root/some_artist/some_album/song1.mp3")
 	filescanner.AddFileToTree("root/some_artist/some_album/cd1/song.mp3")
-	fileTree = filescanner.FileTree
+	nodeTree = filescanner.FileTree
 
-	fileTreeToItunes(fileTree, true)
+	fileTreeToItunes(nodeTree, true)
 
 	mock.AssertTreeMapHasNameAndType(t, mock.MockTree, []int{0, 0}, "some_album", itunes.Playlist)
 	mock.AssertTreeMapHasNameAndType(t, mock.MockTree, []int{0, 0, 0}, "root/some_artist/some_album/song.mp3", itunes.File)
@@ -100,9 +100,9 @@ func Test__should_support_single_root(t *testing.T) {
 	filescanner.AddFileToTree("root/A/A2/A-1.mp3")
 	filescanner.AddFileToTree("root/B/B1/B-1.mp3")
 	filescanner.AddFileToTree("root/C/C1/C-1.mp3")
-	fileTree = filescanner.FileTree
+	nodeTree = filescanner.FileTree
 
-	fileTreeToItunes(fileTree, true)
+	fileTreeToItunes(nodeTree, true)
 
 	mock.AssertTreeMapHasNameAndType(t, mock.MockTree, []int{}, "root", itunes.Dir)
 	mock.AssertTreeMapHasNameAndType(t, mock.MockTree, []int{0}, "A", itunes.Dir)
@@ -116,9 +116,9 @@ func Test__should_support_not_including_root(t *testing.T) {
 	filescanner.AddFileToTree("root/A/A1/A-1.mp3")
 	filescanner.AddFileToTree("root/B/B1/B-1.mp3")
 	filescanner.AddFileToTree("root/C/C1/C-1.mp3")
-	fileTree = filescanner.FileTree
+	nodeTree = filescanner.FileTree
 
-	fileTreeToItunes(fileTree, false)
+	fileTreeToItunes(nodeTree, false)
 
 	mock.AssertTreeMapHasNameAndType(t, mock.MockTree, []int{}, "", 0)
 	mock.AssertTreeMapHasNameAndType(t, mock.MockTree, []int{0}, "A", itunes.Dir)
@@ -131,11 +131,22 @@ func Test__should_support_not_including_root(t *testing.T) {
 
 // 	filescanner.AddFileToTree("root/art/alb/sng.mp3")
 
-// 	fileTreeToItunes(fileTree, true)
-// 	fileTreeToItunes(fileTree, true)
+// 	fileTreeToItunes(nodeTree, true)
+// 	fileTreeToItunes(nodeTree, true)
 
 // 	// printMockTree(resultNode, 0)
 
 // 	AssertTreeMapHasNameAndType(t, mock.MockTree, []int{}, "root", itunes.Dir)
 // 	AssertTreeMapHasNameAndType(t, mock.MockTree, []int{0}, "art", itunes.Dir)
+// }
+
+// func Test__should_merge_fileTree_and_libraryTree(t *testing.T) {
+// 	filescanner.AddFileToTree("root/A/A1/A-1.mp3")
+// 	filescanner.AddFileToTree("root/B/B1/B-1.mp3")
+// 	filescanner.AddFileToTree("root/C/C1/C-1.mp3")
+// 	nodeTree = filescanner.FileTree
+
+// 	tree.Print(nodeTree, 0)
+
+// 	t.Fail()
 // }

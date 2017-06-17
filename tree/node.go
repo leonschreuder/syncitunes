@@ -3,9 +3,11 @@ package tree
 import "fmt"
 
 type Node struct {
-	Name  string
-	Path  string // Only leafs have a path
-	Nodes []*Node
+	Name     string
+	Path     string // Only leafs have a path
+	ID       int
+	ParentID int
+	Nodes    []*Node
 }
 
 func (n *Node) NewRoot(rootName string) {

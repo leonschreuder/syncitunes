@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/meonlol/syncitunes/itunes"
+	"github.com/meonlol/syncitunes/tree"
 )
 
 var MockTree *MockNode
@@ -46,6 +47,9 @@ func (i *MockInterface) AddFileToPlaylist(filePath string, playlistID int) (int,
 }
 func (MockInterface) DeletePlaylistByID(id int) error {
 	return nil
+}
+
+func (MockInterface) UpdateTreeWithExisting(tree *tree.Node) {
 }
 
 func printMockTree(n *MockNode, depth int) {

@@ -11,14 +11,16 @@ import (
 
 var iTunes itunes.Interface
 
-var fileTree *tree.Node
+var nodeTree *tree.Node
+
+// Build GUI with this? https://github.com/andlabs/ui
 
 func main() {
-	fileTree, _ = filescanner.ScanFolder("/Users/leonmoll/leon/@music/")
-	tree.Print(fileTree, 0)
+	nodeTree, _ = filescanner.ScanFolder("/Users/leonmoll/leon/@music/")
+	tree.Print(nodeTree, 0)
 	iTunes = &applescript_cli.Adapter{}
-	// iTunes.UpdateTreeWithExisting(fileTree)
-	fileTreeToItunes(fileTree, false)
+	iTunes.UpdateTreeWithExisting(nodeTree)
+	fileTreeToItunes(nodeTree, false)
 }
 
 func fileTreeToItunes(node *tree.Node, includeRoot bool) {
