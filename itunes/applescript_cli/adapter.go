@@ -81,29 +81,31 @@ func (a Adapter) UpdateTreeWithExisting(tree *tree.Node) {
 }
 
 func (a Adapter) GetLibrary() (string, error) {
-	// Confusing, I know; Applescript+iTunes suck
-	//
-	// 1st copy: is an actual playlist containing songs
-	// 2nd copy: try if folder playlist
-	// 3rd copy: Error; had no parent or tracks. Try copying tracks
-	// 4th copy: All failed; must be a folder or playlist at root level
-	// TODO: Doesn't cover sub-playlist without tracks
 	out, err := a.runAppleScriptForItunes(`
 	set resultList to {}
 	repeat with currentPlaylist in (get every playlist)
+		set playlistName to name of currentPlaylist
+		set playlistID to id of currentPlaylist
+		set parentID to -1
 		try
-			if class of currentPlaylist is user playlist then
-				copy {name, id, id of parent, location of every track} in currentPlaylist to end of resultList
-			else
-				copy {name, id, id of parent} in currentPlaylist to end of resultList
-			end if
-		on error
-			try
-				copy {name, id, location of every track} in currentPlaylist to end of resultList
-			on error
-				copy {name, id} in currentPlaylist to end of resultList
-			end try
+			set parentID to id of parent in currentPlaylist
 		end try
+		set trackLocations to {}
+		if class of currentPlaylist is user playlist then
+			#Don't get tracks for folders
+			try
+				set trackLocations to location of every track in currentPlaylist
+			end try
+		end if
+		set isSmart to false
+		if class of currentPlaylist is not folder playlist then
+			try
+				set isSmart to smart of currentPlaylist
+			end try
+		end if
+		if not isSmart then
+			copy {playlistName, playlistID, parentID, trackLocations} to end of resultList
+		end if
 	end repeat
 	return resultList
 	`)
