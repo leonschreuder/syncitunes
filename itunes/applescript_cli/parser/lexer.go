@@ -72,12 +72,6 @@ func lexInputString(l *lexer) stateFn {
 	return nil
 }
 
-func lexOpener(l *lexer) stateFn {
-	l.pos++
-	l.emit(opener)
-	return lexObjectArray
-}
-
 func lexObjectArray(l *lexer) stateFn {
 	for {
 		if l.pos < len(l.input) {
@@ -102,24 +96,14 @@ func lexObjectArray(l *lexer) stateFn {
 	return nil
 }
 
-// func lexObjectOpener(l *lexer) stateFn {
-// 	l.pos++
-// 	l.emit(opener)
-// 	return lexInsideObject
-// }
-
-func lexCloser(l *lexer) stateFn {
-	l.pos++
-	l.emit(closer)
-	return lexInsideObject
-}
-
 func lexInsideObject(l *lexer) stateFn {
 	for {
 		if l.pos < len(l.input) {
 			switch peekNext(l) {
 			case "{":
-				return lexFilesListOpener
+				l.pos++
+				l.emit(opener)
+				return lexInsideFilesList
 			case "}":
 				l.pos++
 				l.emit(closer)
@@ -131,8 +115,6 @@ func lexInsideObject(l *lexer) stateFn {
 			case ",":
 				l.pos++
 				l.emit(separator)
-			// return lexInsideObject
-			// 	return lexSeparator
 			case "-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9":
 				return lexID
 			}
@@ -143,20 +125,18 @@ func lexInsideObject(l *lexer) stateFn {
 	return nil
 }
 
-func lexSeparator(l *lexer) stateFn {
+func lexInsideString(l *lexer) stateFn {
 	for {
-		if peekNext(l) != " " && peekNext(l) != "," {
-			l.emit(separator)
+		switch peekNext(l) {
+		case "\"":
+			l.emit(itemName)
+
+			l.pos++
+			l.emit(closeQuote)
 			return lexInsideObject
 		}
 		l.pos++
 	}
-}
-
-func lexOpenQuote(l *lexer) stateFn {
-	l.pos++
-	l.emit(openQuote)
-	return lexInsideString
 }
 
 func lexID(l *lexer) stateFn {
@@ -170,51 +150,41 @@ func lexID(l *lexer) stateFn {
 	}
 }
 
-func lexFilesListOpener(l *lexer) stateFn {
-	l.pos++
-	l.emit(opener)
-	return lexInsideFilesList
-}
-
 func lexInsideFilesList(l *lexer) stateFn {
-	if l.pos < len(l.input) {
-		switch peekNext(l) {
-		case "a":
-			return lexAliasNotation
-		case "\"":
-			return lexFilePathCloser
-		case ",":
-			return lexSeparator
-		case "}":
-			return lexCloser
+	for {
+		if l.pos < len(l.input) {
+			switch peekNext(l) {
+			case "a":
+				return lexAliasNotation
+			case ",":
+				l.pos++
+				l.emit(separator)
+			case "}":
+				l.pos++
+				l.emit(closer)
+				return lexInsideObject
+			}
 		}
+		l.pos++
+		l.start++
 	}
 	return nil
 }
 
 func lexAliasNotation(l *lexer) stateFn {
 	for {
-		// Expecting the word 'alias' followed by a space
-		if peekNext(l) == " " {
+		switch peekNext(l) {
+		case " ":
+			//Lex till space, just lexed 'alias'
 			l.emit(aliasIndicator)
-			return lexFilePathOpener
-		}
-		l.pos++
-	}
-}
-
-func lexFilePathOpener(l *lexer) stateFn {
-	for {
-		// Expecting the word 'alias' followed by a space
-		if peekNext(l) != " " && peekNext(l) != "\"" {
+			l.start++
+		case "\"":
+			l.pos++
 			l.emit(filePathOpener)
 			return lexFilePath
 		}
 		l.pos++
 	}
-	l.pos++
-	l.emit(filePathOpener)
-	return lexInsideString
 }
 
 func lexFilePath(l *lexer) stateFn {
@@ -223,39 +193,10 @@ func lexFilePath(l *lexer) stateFn {
 		// TODO: Should be able to handle quotes inside filenames
 		if peekNext(l) == "\"" {
 			l.emit(filePath)
-			return lexInsideFilesList
-		}
-		l.pos++
-	}
-}
-
-func lexFilePathCloser(l *lexer) stateFn {
-	l.pos++
-	l.emit(closeQuote)
-	return lexFilesListCloser
-}
-
-func lexFilesListCloser(l *lexer) stateFn {
-	l.pos++
-	l.emit(closer)
-	return lexInsideObject
-}
-
-func lexCloseQuote(l *lexer) stateFn {
-	l.pos++
-	l.emit(closeQuote)
-	return lexInsideObject
-}
-
-func lexInsideString(l *lexer) stateFn {
-	for {
-		switch peekNext(l) {
-		case "\"":
-			l.emit(itemName)
 
 			l.pos++
 			l.emit(closeQuote)
-			return lexInsideObject
+			return lexInsideFilesList
 		}
 		l.pos++
 	}
