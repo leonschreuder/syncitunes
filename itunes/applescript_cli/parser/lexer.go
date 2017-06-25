@@ -12,18 +12,19 @@ type item struct {
 }
 
 const (
-	itemError      itemType = iota // error occured. Value is error text
-	plainText                      //
-	opener                         // {
-	openQuote                      // "
-	closeQuote                     // "
-	closer                         // }
-	itemName                       // name of the playlist
-	itemId                         // id of the playlist
-	separator                      // ',' with or without ' '
-	aliasIndicator                 // word alias
-	filePathOpener                 // "
-	filePath                       // the path of the file
+	itemError         itemType = iota // error occured. Value is error text
+	plainText                         //
+	opener                            // {
+	openQuote                         // "
+	closeQuote                        // "
+	closer                            // }
+	itemName                          // name of the playlist
+	itemId                            // id of the playlist
+	separator                         // ',' with or without ' '
+	aliasIndicator                    // word alias
+	filePathOpener                    // "
+	filePathSeparator                 // :
+	filePathItem                      // One node in the directory tree
 )
 
 type lexer struct {
@@ -189,10 +190,16 @@ func lexAliasNotation(l *lexer) stateFn {
 
 func lexFilePath(l *lexer) stateFn {
 	for {
-		// Scanning path until closing quote.
-		// TODO: Should be able to handle quotes inside filenames
-		if peekNext(l) == "\"" {
-			l.emit(filePath)
+		// Scanning path items until closing quote.
+		// TODO: Not checked for special characters in string ( : or " in names)
+		switch peekNext(l) {
+		case ":":
+			l.emit(filePathItem)
+
+			l.pos++
+			l.emit(filePathSeparator)
+		case "\"":
+			l.emit(filePathItem)
 
 			l.pos++
 			l.emit(closeQuote)

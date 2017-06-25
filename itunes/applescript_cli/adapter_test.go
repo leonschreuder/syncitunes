@@ -4,8 +4,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/meonlol/syncitunes/filescanner"
-	"github.com/meonlol/syncitunes/tree"
 	"github.com/stretchr/testify/assert"
 )
 
