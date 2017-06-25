@@ -87,9 +87,11 @@ func lexObjectArray(l *lexer) stateFn {
 			case ",":
 				l.pos++
 				l.emit(separator)
+			default:
+				//Space for example
+				l.pos++
+				l.start++
 			}
-			l.pos++
-			l.start++
 		} else {
 			break
 		}
@@ -118,10 +120,12 @@ func lexInsideObject(l *lexer) stateFn {
 				l.emit(separator)
 			case "-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9":
 				return lexID
+			default:
+				//Space for example
+				l.pos++
+				l.start++
 			}
 		}
-		l.pos++
-		l.start++
 	}
 	return nil
 }
