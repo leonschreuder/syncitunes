@@ -31,7 +31,7 @@ import (
 // 			alias "Macintosh HD:Users:leonmoll:leon:@music:albums:Air:Air - 10000 Hz Legend:11-Caramel Prisoner.mp3"}},
 
 func Test__should_parse_root_object(t *testing.T) {
-	input := "{{\"bla\", 14, -1, {}}}"
+	input := `{{"bla", 14, -1, {}}}`
 
 	result := parse(input)
 
@@ -41,7 +41,7 @@ func Test__should_parse_root_object(t *testing.T) {
 }
 
 func Test__should_parse_non_root_object(t *testing.T) {
-	input := "{{\"bla\", 15, 13, {}}}"
+	input := `{{"bla", 15, 13, {}}}`
 
 	result := parse(input)
 
@@ -52,7 +52,7 @@ func Test__should_parse_non_root_object(t *testing.T) {
 }
 
 func Test__should_parse_multiple_objects(t *testing.T) {
-	input := "{{\"root\", 14}{\"lvl1A\", 15, 14}{\"lvl1B\", 16, 14}}"
+	input := `{{"root", 14}{"lvl1A", 15, 14}{"lvl1B", 16, 14}}`
 
 	result := parse(input)
 
@@ -67,11 +67,44 @@ func Test__should_parse_multiple_objects(t *testing.T) {
 	assert.Equal(t, 14, result[2].parentID)
 }
 
+func Test__should_parse_tree_with_a_song(t *testing.T) {
+	input := `{{"albums", 10, -1, {}},{"Air", 11, 10, {}},{"Air - 10000 Hz Legend", 12, 11, {alias "Macintosh HD:Users:music:albums:Air:Air - 10000 Hz Legend:01-Electronic Performers.mp3"}}}`
+
+	result := parse(input)
+
+	assert.NotNil(t, result)
+	assert.Equal(t, "albums", result[0].name)
+	assert.Equal(t, 10, result[0].ID)
+	assert.Equal(t, "Air", result[1].name)
+	assert.Equal(t, 11, result[1].ID)
+	assert.Equal(t, 10, result[1].parentID)
+
+	assert.Equal(t, "Air - 10000 Hz Legend", result[2].name)
+	assert.Equal(t, 12, result[2].ID)
+	assert.Equal(t, 11, result[2].parentID)
+	assert.Equal(t, 1, len(result[2].songs))
+	assert.Equal(t, 1, len(result[2].songs))
+	assert.Equal(t, 7, len(result[2].songs[0].pathElements))
+}
+
+func Test__should_parse_tree_with_multiple_songs(t *testing.T) {
+	input := `{{"mixes", 10, -1, {alias "Disk:mixes:mix a.mp3", alias "Disk:mixes:mix b.mp3"}}}`
+
+	result := parse(input)
+
+	assert.NotNil(t, result)
+	assert.Equal(t, "mixes", result[0].name)
+	assert.Equal(t, 10, result[0].ID)
+	assert.Equal(t, 2, len(result[0].songs))
+	assert.Equal(t, 3, len(result[0].songs[0].pathElements))
+	assert.Equal(t, 3, len(result[0].songs[1].pathElements))
+}
+
 func Test__should_update_simplest_tree(t *testing.T) {
 	filescanner.FileTree = &tree.Node{}
 	filescanner.AddFileToTree("root/some_album/song.mp3")
 
-	input := "{{\"root\", 1}{\"some_album\", 2, 1}}"
+	input := `{{"root", 1}{"some_album", 2, 1}}`
 
 	parseUpdatingTree(input, filescanner.FileTree)
 
@@ -86,7 +119,7 @@ func Test__should_update_tree_with_multiple_subfolders(t *testing.T) {
 	filescanner.AddFileToTree("root/subFolder/1.mp3")
 	filescanner.AddFileToTree("root/subFolder2/2.mp3")
 
-	input := "{{\"root\", 1}{\"subFolder\", 2, 1}{\"subFolder2\", 3, 1}}"
+	input := `{{"root", 1}{"subFolder", 2, 1}{"subFolder2", 3, 1}}`
 
 	parseUpdatingTree(input, filescanner.FileTree)
 

@@ -6,10 +6,15 @@ import (
 	"github.com/meonlol/syncitunes/tree"
 )
 
+type song struct {
+	pathElements []*string
+}
+
 type itunesObject struct {
 	name     string
 	ID       int
 	parentID int
+	songs    []*song
 }
 
 func parseUpdatingTree(input string, nodeTree *tree.Node) {
@@ -52,13 +57,22 @@ func parse(input string) []itunesObject {
 			objs = append(objs, itunesObject{name: it.val})
 		}
 		if it.typ == itemId {
-			lastObj := objs[len(objs)-1]
+			lastObj := &objs[len(objs)-1]
 			n, _ := strconv.Atoi(it.val)
 			if lastObj.ID == 0 {
-				objs[len(objs)-1].ID = n
+				lastObj.ID = n
 			} else {
-				objs[len(objs)-1].parentID = n
+				lastObj.parentID = n
 			}
+		}
+		if it.typ == aliasIndicator {
+			lastObj := &objs[len(objs)-1]
+			lastObj.songs = append(lastObj.songs, &song{})
+		}
+		if it.typ == filePathItem {
+			lastObj := &objs[len(objs)-1]
+			lastSongFromObject := lastObj.songs[len(lastObj.songs)-1]
+			lastSongFromObject.pathElements = append(lastSongFromObject.pathElements, &it.val)
 		}
 	}
 	return objs
