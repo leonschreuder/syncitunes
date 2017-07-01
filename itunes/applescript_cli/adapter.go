@@ -94,7 +94,7 @@ func (a Adapter) GetLibrary() (string, error) {
 		if class of currentPlaylist is user playlist then
 			#Don't get tracks for folders
 			try
-				set trackLocations to location of every track in currentPlaylist
+				set trackLocations to {id, location} of every track in currentPlaylist
 			end try
 		end if
 		set isSmart to false
